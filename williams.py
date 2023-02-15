@@ -57,3 +57,4 @@ print(solve([[3, -4, 2], [1, -7, -3], [-2, 4, 7]]))
 print(solve([[2,3,1,4], [1,2,5,4], [2,3,4,1], [4,2,2,2]]) )  # Example on page 185
 print(solve([[4,0,2], [6,7,1]])                            ) # Exercise 2 number 3
 print(solve([[50, 80], [90, 20]]))
+print(solve([[-1, 4], [3, 2]]))

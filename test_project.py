@@ -1,5 +1,16 @@
-from project import Strategy, Player, Opponent, Game, all_entries_equal, is_biggest_in_list, minimaxi, oddments2, oddments3
+from project import Strategy, Player, Opponent, Game, all_entries_equal, is_biggest_in_list, minimaxi, oddments2, oddments3, transpose_strategy_set
 
+
+def test_transpose_strategy():
+    s_01 = Strategy("S_01", (0, 0))
+    s_02 = Strategy("S_02", (-10, 4))
+    strategy_set = list()
+    strategy_set.append(s_01)
+    strategy_set.append(s_02)
+
+    new_strategy_set = transpose_strategy_set(strategy_set)
+
+    assert f"{new_strategy_set}" == "[S*_0 [0, -10], S*_1 [0, 4]]"
 
 def test_minimaxi():
     s_01 = Strategy("S_01", (9, 7))

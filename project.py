@@ -1,9 +1,8 @@
-from tabulate import tabulate
-from sys import argv, exit
-from typing import Optional
+from tabulate import tabulate  # table pretty
+from typing import Optional  # annotation
+from sys import exit
 import configparser
-
-USE_WEAKLY = True
+import argparse
 
 
 class Strategy:
@@ -11,7 +10,7 @@ class Strategy:
     a strategy has a name and some payoffs in form of a list
     """
 
-    def __init__(self, name, payoffs):
+    def __init__(self, name: str, payoffs: list[int]):
         """
         initialise a new strategy by providing a name and the list of payoffs
         """
@@ -41,7 +40,7 @@ class Strategy:
         """
         return self._payoffs
 
-    def payoff(self, index) -> int:
+    def payoff(self, index: int) -> int:
         """
         returns the payoff for this stratehy given the index, hence the opponents strategy
         """
@@ -53,7 +52,7 @@ class DefaultPlayer:
     a player has a name and a set of strategies
     """
 
-    def __init__(self, name, payoffs_str):
+    def __init__(self, name: str, payoffs_str: str):
         """
         initialises a new player with the specified name and payoffs
         in addition a set of strategies is constructed from those payoffs
@@ -61,7 +60,7 @@ class DefaultPlayer:
         """
 
         self._name = name
-        self._strategy_set = []
+        self._strategy_set = list()
 
         if type(payoffs_str) != str:
             raise ValueError("payoffs need to be a string in form (a, b), (c, d)")
@@ -70,9 +69,9 @@ class DefaultPlayer:
             strategy_sets = payoffs_str.replace("(", "").split(")")
 
             for n in range(len(strategy_sets) - 1):
-                payoffs_str = strategy_sets[n].strip().split(",")
-                payoffs = []
-                for payoff in payoffs_str:
+                payoffs_str_list = strategy_sets[n].strip().split(",")
+                payoffs = list()
+                for payoff in payoffs_str_list:
                     payoff = payoff.strip()
                     if payoff != None and payoff != "":
                         payoffs.append(int(payoff))
@@ -98,13 +97,13 @@ class DefaultPlayer:
         """
         return self._strategy_set
 
-    def strategy(self, index) -> Strategy:
+    def strategy(self, index: int) -> Strategy:
         """
         returns the strategy from the set given the index
         """
         return self._strategy_set[index]
 
-    def remove_strategy(self, strategy) -> None:
+    def remove_strategy(self, strategy: Strategy) -> int:
         """
         this method should only be called by the game class to ensure
         the other players payoffs are also updated
@@ -193,17 +192,17 @@ class DefaultPlayer:
 
 
 class Player(DefaultPlayer):
-    def __init__(self, payoffs):
-        super().__init__("P", payoffs)
+    def __init__(self, name, payoffs):
+        super().__init__(name, payoffs)
 
 
 class Opponent(DefaultPlayer):
-    def __init__(self, payoffs):
-        super().__init__("O", payoffs)
+    def __init__(self, name, payoffs):
+        super().__init__(name, payoffs)
 
 
 class Game:
-    def __init__(self, player, opponent):
+    def __init__(self, player: Player, opponent: Player):
         self._player = player
         self._opponent = opponent
         self._players = [self._player, self._opponent]
@@ -230,7 +229,7 @@ class Game:
         return tabulate(data, header, tablefmt="grid", stralign="center")
 
     def strictly_dominating_strategy(
-        self, player_index, opponent_index
+        self, player_index: int, opponent_index: int
     ) -> Optional[Strategy]:
         """
         :return: if found, a strictly dominated strategy
@@ -261,7 +260,7 @@ class Game:
             return None
 
     def strictly_dominated_strategy(
-        self, player_index, opponent_index
+        self, player_index: int, opponent_index: int
     ) -> Optional[Strategy]:
         """
 
@@ -370,7 +369,7 @@ class Game:
         counter = 0
         while True:
             # check each player for strictly dominated strategies and delete them
-            print(f"iteration {counter}")
+            print(f"    iteration {counter}")
             further_check_required = False
             for player in self._players:
                 sds = player.strictly_dominated_strategy()
@@ -407,17 +406,18 @@ class Game:
                 print(f"... no further optimization found")
                 break
 
-    def mixed_strategy(self, player: Player) -> list[float]:
+    def mixed_strategy(self, player: Player) -> tuple[float, float]:
         """
         formular for solving 2x2 games
         """
 
         # we need the other player payoffs for our distribution
         player_index = self._players.index(player)
+        other_player: Player
         if player_index == 0:
-            other_player: Player = self.players[1]
+            other_player = self.players[1]
         else:
-            other_player: Player = self.players[0]
+            other_player = self.players[0]
 
         mix = list()
 
@@ -430,31 +430,29 @@ class Game:
             mix.append(q)
             mix.append(1 - q)
         else:
-            print("   number of available strategies insufficent")
+            print("   only 2x2 games supported")
 
-        return mix
+        return (q, 1 - q)
 
     def solve_by_oddment(self, player: Player) -> tuple[float, ...]:
-        """
-        
-        """
+        """ """
         # we need the other player payoffs for our distribution
         player_index = self._players.index(player)
+        other_player: Player
+
+        # we analyse for the player and therefore we use the opponents payoffs
         if player_index == 0:
-            other_player: Player = self.players[1]
+            # the other player is the opponent
+            other_player = self.players[1]
+            # and hence we use his/hers strategy_set
+            strategy_set = other_player.strategy_set
         else:
-            other_player: Player = self.players[0]
+            other_player = self.players[0]
+            strategy_set = other_player.strategy_set
 
-        strategy_set = other_player.strategy_set
+        return oddments3(strategy_set)
 
-        if len(strategy_set) == 2:
-            return oddments2(strategy_set)
-        elif len(strategy_set) == 3:
-            return oddments3(strategy_set)
-        else:
-            raise ValueError("Can only solve strategy sets oflength 2 or 3")
-
-    def remove_strategy(self, player, strategy) -> None:
+    def remove_strategy(self, player: Player, strategy: Strategy) -> None:
         """
         removing a strategy means for the player to drop his/her strategy,
         but also to remove the payoffs for the opponent for that startegy
@@ -473,21 +471,35 @@ class Game:
 
 
 def main():
-    if len(argv) != 2:
-        exit(f"Usage: python project.py game.txt")
+    parser = argparse.ArgumentParser(description="Solve payoff matrices")
+    parser.add_argument(
+        "--use_weakly",
+        action="store_true",
+        help="use also weak when using iterate deletion",
+    )
+    parser.add_argument(
+        "-c", type=str, help="path to the *.ini file holding the payoffs"
+    )
+    args = parser.parse_args()
+
+    USE_WEAKLY = args.use_weakly
+
     try:
         config = configparser.ConfigParser()
-        dataset = config.read(argv[1])
+        config.read("default.ini")
+        dataset = config.read(args.c)
         if len(dataset) != 1:
-            exit(f"{argv[1]} could not be found")
+            exit(f"{args.c} could not be found")
 
         # init player
         player_payoffs = config.get("payoffs", "player")
-        player = Player(player_payoffs)
+        player_name = config.get("names", "player")
+        player = Player(player_name, player_payoffs)
 
         # init opponent
         opponent_payoffs = config.get("payoffs", "opponent")
-        opponent = Opponent(opponent_payoffs)
+        opponent_name = config.get("names", "opponent")
+        opponent = Opponent(opponent_name, opponent_payoffs)
 
     except BaseException as be:
         exit(be)
@@ -512,7 +524,7 @@ def main():
 
     print("Conduncting iterated deletion of dominated, strategies ...")
     if USE_WEAKLY:
-        print("... including weakly dominated strategies")
+        print("... including weakly dominated strategies ...")
     game.solve_by_iterated_deletion(use_weakly=USE_WEAKLY)
 
     # print the resulting payoff matrix
@@ -521,11 +533,15 @@ def main():
 
     print()
     print("Looking for mixed strategy equilibrium ...")
-    # player_mix: list[float] = game.mixed_strategy(player)
-    # opponent_mix: list[float] = game.mixed_strategy(opponent)
     try:
-        player_mix: list[float] = game.solve_by_oddment(player)
-        opponent_mix: list[float] = game.solve_by_oddment(opponent)
+        if player.strategy_set_size() == 2:
+            player_mix: list[float] = game.mixed_strategy(player)
+            opponent_mix: list[float] = game.mixed_strategy(opponent)
+        elif player.strategy_set_size() == 3:
+            player_mix: list[float] = game.solve_by_oddment(player)
+            opponent_mix: list[float] = game.solve_by_oddment(opponent)
+        else:
+            raise ValueError("Can only solve strategy sets of length 2 or 3")
     except ValueError as ve:
         print(ve)
         exit(0)
@@ -537,7 +553,7 @@ def main():
         print(f"Mix for opponent")
         for j in range(len(opponent_mix)):
             print(
-                f"   opponent should mix {opponent.strategy(i)} with {opponent_mix[j]:.0%}"
+                f"   opponent should mix {opponent.strategy(j)} with {opponent_mix[j]:.0%}"
             )
     else:
         print("... no mixed stratgies identified")
@@ -590,11 +606,14 @@ def oddments2(strategy_set: list[Strategy]) -> tuple[float, float]:
     :rtype : tuple[float, foat]
     """
     if len(strategy_set) != 2:
-        raise ValueError("Stratgy set must have a length of 2")
+        raise ValueError("Strategy set must have a length of 2")
+
     rows_oddments = list()
     rows_oddments.append(abs(strategy_set[1].payoff(0) - strategy_set[1].payoff(1)))
     rows_oddments.append(abs(strategy_set[0].payoff(0) - strategy_set[0].payoff(1)))
     rows_sum = sum(rows_oddments)
+
+    print(f" running oddment_2 for {strategy_set} resulting in {rows_oddments}")
 
     return (rows_oddments[0] / rows_sum, rows_oddments[1] / rows_sum)
 
@@ -605,7 +624,7 @@ def oddments3(strategy_set: list[Strategy]) -> tuple[float, float, float]:
 
     Using stratehy sets of length 3, the algorithm look a bit different, ass we need
     to first calculate the colum differences, and then use those to get the oddments
-    
+
     :return: a tuple of the suggested distribution amongst the strategy set, should sum up to 1
     :rtype : tuple[float, foat, float]
     """
@@ -615,7 +634,6 @@ def oddments3(strategy_set: list[Strategy]) -> tuple[float, float, float]:
     c1c2 = list()
     c2c3 = list()
     for strategy in strategy_set:
-        print(strategy)
         c1c2.append(strategy.payoff(0) - strategy.payoff(1))
         c2c3.append(strategy.payoff(1) - strategy.payoff(2))
 
@@ -632,6 +650,22 @@ def oddments3(strategy_set: list[Strategy]) -> tuple[float, float, float]:
         oddments[1] / oddments_sum,
         oddments[2] / oddments_sum,
     )
+
+
+def transpose_strategy_set(strategy_set) -> list[Strategy]:
+    strategies: int = len(strategy_set)
+    payoffs_size: int = len(strategy_set[0].payoffs)
+
+    transposed_set: list[Strategy] = list()
+
+    for p in range(payoffs_size):
+        transposed_payoffs = list()
+        for s in range(strategies):
+            transposed_payoffs.append(strategy_set[s].payoff(p))
+        strategy: Strategy = Strategy("S*_" + str(p), transposed_payoffs)
+        transposed_set.append(strategy)
+
+    return transposed_set
 
 
 if __name__ == "__main__":
