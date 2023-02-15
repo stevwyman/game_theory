@@ -3,6 +3,7 @@ from sys import argv, exit
 from typing import Optional
 import configparser
 
+USE_WEAKLY = True
 
 
 class Strategy:
@@ -228,7 +229,9 @@ class Game:
 
         return tabulate(data, header, tablefmt="grid", stralign="center")
 
-    def strictly_dominating_strategy(self, player_index, opponent_index) -> Optional[Strategy]:
+    def strictly_dominating_strategy(
+        self, player_index, opponent_index
+    ) -> Optional[Strategy]:
         """
         :return: if found, a strictly dominated strategy
         :rtype: Strategy
@@ -257,9 +260,11 @@ class Game:
         else:
             return None
 
-    def strictly_dominated_strategy(self, player_index, opponent_index) -> Optional[Strategy]:
+    def strictly_dominated_strategy(
+        self, player_index, opponent_index
+    ) -> Optional[Strategy]:
         """
-        
+
         :return: the strictly dominated strategy if found, None else
         :rtype: Strategy
         """
@@ -295,9 +300,9 @@ class Game:
     def players(self):
         return self._players
 
-    def nash_equilibrium(self) -> list[tuple[Strategy, Strategy]]:
+    def pure_nash_equilibrium(self) -> list[tuple[Strategy, Strategy]]:
         """
-        checks for nash equilibria
+        checks for pure nash equilibria
 
         :return: if found, a list of NE in form of a tup containg the strategy names
         :rtype: list
@@ -402,6 +407,53 @@ class Game:
                 print(f"... no further optimization found")
                 break
 
+    def mixed_strategy(self, player: Player) -> list[float]:
+        """
+        formular for solving 2x2 games
+        """
+
+        # we need the other player payoffs for our distribution
+        player_index = self._players.index(player)
+        if player_index == 0:
+            other_player: Player = self.players[1]
+        else:
+            other_player: Player = self.players[0]
+
+        mix = list()
+
+        if other_player.strategy_set_size() == 2:
+            bd = other_player.strategy(0).payoff(1) - other_player.strategy(1).payoff(1)
+            ca = other_player.strategy(1).payoff(0) - other_player.strategy(0).payoff(0)
+
+            q: float = bd / (ca + bd)
+
+            mix.append(q)
+            mix.append(1 - q)
+        else:
+            print("   number of available strategies insufficent")
+
+        return mix
+
+    def solve_by_oddment(self, player: Player) -> tuple[float, ...]:
+        """
+        
+        """
+        # we need the other player payoffs for our distribution
+        player_index = self._players.index(player)
+        if player_index == 0:
+            other_player: Player = self.players[1]
+        else:
+            other_player: Player = self.players[0]
+
+        strategy_set = other_player.strategy_set
+
+        if len(strategy_set) == 2:
+            return oddments2(strategy_set)
+        elif len(strategy_set) == 3:
+            return oddments3(strategy_set)
+        else:
+            raise ValueError("Can only solve strategy sets oflength 2 or 3")
+
     def remove_strategy(self, player, strategy) -> None:
         """
         removing a strategy means for the player to drop his/her strategy,
@@ -444,16 +496,51 @@ def main():
     game = Game(player, opponent)
 
     # show the initial payoff matrix
+    print("Commencing analysis of the following game/payoff matrix:")
     print(game)
 
-    for ne in game.nash_equilibrium():
-        print(f"Nash equilibrium at: {ne[0].name} and {ne[1].name}")
+    print()
+    nash_equilibria: list = game.pure_nash_equilibrium()
+    if len(nash_equilibria) > 0:
+        for ne in nash_equilibria:
+            print(f"Pure nash equilibrium at: {ne[0].name} and {ne[1].name}")
+    else:
+        print("No pure Nash Equilibrium identified")
 
     # try solving by iterated deletion
-    game.solve_by_iterated_deletion(use_weakly=True)
+    print()
+
+    print("Conduncting iterated deletion of dominated, strategies ...")
+    if USE_WEAKLY:
+        print("... including weakly dominated strategies")
+    game.solve_by_iterated_deletion(use_weakly=USE_WEAKLY)
 
     # print the resulting payoff matrix
+    print()
     print(game)
+
+    print()
+    print("Looking for mixed strategy equilibrium ...")
+    # player_mix: list[float] = game.mixed_strategy(player)
+    # opponent_mix: list[float] = game.mixed_strategy(opponent)
+    try:
+        player_mix: list[float] = game.solve_by_oddment(player)
+        opponent_mix: list[float] = game.solve_by_oddment(opponent)
+    except ValueError as ve:
+        print(ve)
+        exit(0)
+
+    if len(player_mix) > 0 and len(opponent_mix) > 0:
+        print(f"Mix for player")
+        for i in range(len(player_mix)):
+            print(f"   player should mix {player.strategy(i)} with {player_mix[i]:.0%}")
+        print(f"Mix for opponent")
+        for j in range(len(opponent_mix)):
+            print(
+                f"   opponent should mix {opponent.strategy(i)} with {opponent_mix[j]:.0%}"
+            )
+    else:
+        print("... no mixed stratgies identified")
 
 
 def all_entries_equal(iterator) -> bool:
@@ -467,6 +554,84 @@ def all_entries_equal(iterator) -> bool:
 
 def is_biggest_in_list(n: int, list: list) -> bool:
     return n == max(list)
+
+
+def minimaxi(strategy_set: list[Strategy]) -> tuple[float, float]:
+    """
+    Methode to identfiy, if any, the saddle points of the provided strategy set
+    if both values computed by the algorithm are the same, the saddle point is found
+    """
+    rows_minimums = list()
+    for strategy in strategy_set:
+        rows_payoffs = list()
+        for payoff in strategy.payoffs:
+            rows_payoffs.append(payoff)
+        rows_minimums.append(min(rows_payoffs))
+
+    columns_maximums = list()
+    for column in range(len(strategy_set[0].payoffs)):
+        column_payoffs = list()
+        for strategy in strategy_set:
+            column_payoffs.append(strategy.payoff(column))
+        columns_maximums.append(max(column_payoffs))
+
+    rows_max = max(rows_minimums)
+    columns_min = min(columns_maximums)
+
+    print(f"rows max = {rows_max} and columns min: {columns_min}")
+
+    return (rows_max, columns_min)
+
+
+def oddments2(strategy_set: list[Strategy]) -> tuple[float, float]:
+    """
+    Fiding the oddments of a strategy set with length 2
+    :return: a tuple of the suggested distribution amongst the strategy set, should sum up to 1
+    :rtype : tuple[float, foat]
+    """
+    if len(strategy_set) != 2:
+        raise ValueError("Stratgy set must have a length of 2")
+    rows_oddments = list()
+    rows_oddments.append(abs(strategy_set[1].payoff(0) - strategy_set[1].payoff(1)))
+    rows_oddments.append(abs(strategy_set[0].payoff(0) - strategy_set[0].payoff(1)))
+    rows_sum = sum(rows_oddments)
+
+    return (rows_oddments[0] / rows_sum, rows_oddments[1] / rows_sum)
+
+
+def oddments3(strategy_set: list[Strategy]) -> tuple[float, float, float]:
+    """
+    Fiding the oddments of a strategy set with length 3
+
+    Using stratehy sets of length 3, the algorithm look a bit different, ass we need
+    to first calculate the colum differences, and then use those to get the oddments
+    
+    :return: a tuple of the suggested distribution amongst the strategy set, should sum up to 1
+    :rtype : tuple[float, foat, float]
+    """
+    if len(strategy_set) != 3:
+        raise ValueError("Stratgy set must have a length of 3")
+
+    c1c2 = list()
+    c2c3 = list()
+    for strategy in strategy_set:
+        print(strategy)
+        c1c2.append(strategy.payoff(0) - strategy.payoff(1))
+        c2c3.append(strategy.payoff(1) - strategy.payoff(2))
+
+    # no we build the oddments
+    oddments = list()
+
+    oddments.append(abs(c1c2[1] * c2c3[2] - c1c2[2] * c2c3[1]))
+    oddments.append(abs(c1c2[0] * c2c3[2] - c1c2[2] * c2c3[0]))
+    oddments.append(abs(c1c2[0] * c2c3[1] - c1c2[1] * c2c3[0]))
+    oddments_sum = sum(oddments)
+
+    return (
+        oddments[0] / oddments_sum,
+        oddments[1] / oddments_sum,
+        oddments[2] / oddments_sum,
+    )
 
 
 if __name__ == "__main__":

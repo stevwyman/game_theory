@@ -1,6 +1,52 @@
-from project import Player, Opponent, Game, all_entries_equal, is_biggest_in_list
+from project import Strategy, Player, Opponent, Game, all_entries_equal, is_biggest_in_list, minimaxi, oddments2, oddments3
 
 
+def test_minimaxi():
+    s_01 = Strategy("S_01", (9, 7))
+    s_02 = Strategy("S_02", (5, 11))
+    strategy_set = list()
+    strategy_set.append(s_01)
+    strategy_set.append(s_02)
+
+    assert minimaxi(strategy_set) == (7, 9)
+
+def test_oddments2():
+    s_01 = Strategy("S_01", (50, 80))
+    s_02 = Strategy("S_02", (90, 20))
+    strategy_set = list()
+    strategy_set.append(s_01)
+    strategy_set.append(s_02)
+
+    assert oddments2(strategy_set) == (0.7, 0.3)
+
+    s_01 = Strategy("S_01", (50, 10))
+    s_02 = Strategy("S_02", (20, 80))
+    strategy_set = list()
+    strategy_set.append(s_01)
+    strategy_set.append(s_02)
+
+    assert oddments2(strategy_set) == (0.6, 0.4)
+
+    s_01 = Strategy("S_01", (9, 7))
+    s_02 = Strategy("S_02", (5, 11))
+    strategy_set = list()
+    strategy_set.append(s_01)
+    strategy_set.append(s_02)
+
+    assert oddments2(strategy_set) == (0.75, 0.25)
+
+def test_oddments3():
+    s_01 = Strategy("S_01", (7, 1, 7))
+    s_02 = Strategy("S_02", (9, -1, 1))
+    s_03 = Strategy("S_03", (5, 7, 6))
+    strategy_set = list()
+    strategy_set.append(s_01)
+    strategy_set.append(s_02)
+    strategy_set.append(s_03)
+
+    assert oddments3(strategy_set) == (0.1, 0.1, 0.8)
+
+    
 def test_is_biggest_in_list():
     assert is_biggest_in_list(2, (2, 2, 0)) == True
     assert is_biggest_in_list(0, (2, 2, 0)) == False
