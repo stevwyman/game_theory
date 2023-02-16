@@ -5,18 +5,15 @@ A little tool that could support you by solving game theory matrices, aka payoff
 1. finding pure Nash Equilibrium
 2. iterated deletion of (weakly) dominated strategies
 3. finding mixed Nash Equilibrium
-    by oddments -> 2x2 and 3x3
-    by formula -> 2x2
-    by an algorithm that iterates simply n-times over the matrix and they identifies the oddments
-Note: the last algorithm is still subject of work
+  * by oddments -> 2x2 and 3x3
+  * by formula -> 2x2
+  * by an algorithm that iterates simply n-times over the matrix and they identifies the oddments, note: this algorithm is still subject of work
 
 ## Background
 
 I was taking the ECON 159 by Prof Ben Polak (link) and thought, that it might be some good practice to implement the lessons learned there and combine it with the lesson learned taking the CS50P.
 
 So I have implemented some classes and some algorithms to mimic the process of solving payoff matrices by iterated elimination of dominated strategies.
-
-<!-- ABOUT THE PROJECT -->
 
 ## About The Project
 
@@ -33,10 +30,6 @@ The little program is written entirely in Python and uses only the tabulate impo
 There is only one entry in the requirements.txt:
 
 1. tabulate, which is used to pretty the output of the matrices
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- USAGE EXAMPLES -->
 
 ## Usage
 
@@ -58,16 +51,57 @@ optional arguments:
 
 ## Implementation details
 
+There are two python files:
+
+1. project.py - which holds the main methode
+2. game.py - which holds the representaion of gam, player and algorithms
+
+A game:
+
+```sh
+class Game:
+    def __init__(self, player: Player, opponent: Player):
+        self._player = player
+        self._opponent = opponent
+        self._players = [self._player, self._opponent]
+```
+
+The players inherit from the DefaultPlayer:
+
+```sh
+class DefaultPlayer:
+    def __init__(self, name: str, payoffs_str: str):
+        self._name = name
+        self._strategy_set = list()
+```
+
+A Strategy:
+
+```sh
+class Strategy:
+    def __init__(self, name: str, payoffs: list[int]):
+        self._name = name
+        self._payoffs = payoffs
+```
+
 Aside from the algorithms and classes, the even more important point for me was the usability. Running command-line programs requires often some input. In this case the input would be the payoffs for each player. As there a multiple ways to provide them, either as list, or separated, or ..., the chances are high to have them wrongly formatted.
 
 The most convenient way for the user is to have them written a file and then simply pass the filename. This makes also easy to run the same configuration multiple times. So in order to provide a common format, rather than inventing the wheel new, I went for the .ini configuration.
 
 This gives you a lot of freedom setting up such configuration.
 
-```hs
-[players]
-player = (a, b), (c, d)
-opponent = (e, f), (a, b)
+```sh
+[names]
+player = P
+opponent = O
+
+[strategies]
+player = S
+opponent = S
+
+[payoffs]
+player = (1, 1), (0, 0)
+opponent = (0, 0), (2, 2)
 ```
 
 So I have prepared already some files in advance for myself:
@@ -89,15 +123,8 @@ Therefore the method to solve the game, I have added an optional parameter, whic
 use_weakly = True
 ```
 
-<!-- CONTACT -->
-
-## Contact
-
-email: CS50@stvwyman.com
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- MARKDOWN LINKS & IMAGES -->
 
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-

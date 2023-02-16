@@ -71,7 +71,7 @@ class DefaultPlayer:
                 for payoff in payoffs_str_list:
                     payoff = payoff.strip()
                     if payoff != None and payoff != "":
-                        payoffs.append(int(payoff))
+                        payoffs.append(float(payoff))
                 strategy = Strategy(name + "_S" + str(n), payoffs)
                 self._strategy_set.append(strategy)
                 n += 1
