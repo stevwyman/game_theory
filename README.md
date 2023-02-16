@@ -58,7 +58,7 @@ There are two python files:
 
 A game:
 
-```sh
+```python
 class Game:
     def __init__(self, player: Player, opponent: Player):
         self._player = player
@@ -68,7 +68,7 @@ class Game:
 
 The players inherit from the DefaultPlayer:
 
-```sh
+```python
 class DefaultPlayer:
     def __init__(self, name: str, payoffs_str: str):
         self._name = name
@@ -77,7 +77,7 @@ class DefaultPlayer:
 
 A Strategy:
 
-```sh
+```python
 class Strategy:
     def __init__(self, name: str, payoffs: list[int]):
         self._name = name
@@ -90,7 +90,7 @@ The most convenient way for the user is to have them written a file and then sim
 
 This gives you a lot of freedom setting up such configuration.
 
-```sh
+```ini
 [names]
 player = P
 opponent = O
