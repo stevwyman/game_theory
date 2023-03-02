@@ -15,8 +15,15 @@ def main():
     print("Commencing analysis of the following game/payoff matrix:")
     print(game)
 
+    print(f"Strictly dominating strategy for player: {game.strictly_dominating_strategy(0,1)}")
+    print(f"Strictly dominating strategy for opponent: {game.strictly_dominating_strategy(1,0)}")
+
     print()
-    nash_equilibria: list = game.pure_nash_equilibrium()
+    try:
+        nash_equilibria: list = game.pure_nash_equilibrium()
+    except IndexError as ie:
+        print("Error while looking for pure NE: ", ie)
+        nash_equilibria = list()
     if len(nash_equilibria) > 0:
         print(f"Found {len(nash_equilibria)} pure NE:")
         for ne in nash_equilibria:
@@ -27,7 +34,7 @@ def main():
     # try solving by iterated deletion
     print()
 
-    print("Conduncting iterated deletion of dominated, strategies ...")
+    print("Conducting iterated deletion of dominated, strategies ...")
     if use_weakly:
         print("... including weakly dominated strategies ...")
     game.solve_by_iterated_deletion(use_weakly=use_weakly)
@@ -57,7 +64,7 @@ def main():
                 f"   {game.opponent} should mix {game.opponent.strategy(j)} with {opponent_mix[j]:.0%}"
             )
     else:
-        print("... no mixed stratgies identified")
+        print("... no mixed strategies identified")
 
 
 def game_setup() -> Game:
@@ -65,7 +72,7 @@ def game_setup() -> Game:
     parser.add_argument(
         "--use_weakly",
         action="store_true",
-        help="use also weakly dominated strategies when using iterate deletion, note that this methode might not find all NE",
+        help="use also weakly dominated strategies when using iterate deletion, note that this method might not find all NE",
     )
     parser.add_argument(
         "-c",

@@ -39,7 +39,7 @@ class Strategy:
 
     def payoff(self, index: int) -> int:
         """
-        returns the payoff for this stratehy given the index, hence the opponents strategy
+        returns the payoff for this strategy given the index, hence the opponents strategy
         """
         return self._payoffs[index]
 
@@ -112,7 +112,7 @@ class DefaultPlayer:
     def strategy_set_size(self) -> int:
         return len(self._strategy_set)
 
-    def weakly_domiated_strategy(self) -> list[Strategy]:
+    def weakly_dominated_strategy(self) -> list[Strategy]:
         """
         Weakly dominated strategy: This is a strategy that delivers an equal or worse outcome than an alternative strategy.
 
@@ -130,7 +130,7 @@ class DefaultPlayer:
 
         # select one of the strategies
         for strategy_source in available_strategies:
-            # selct one of the others
+            # select one of the others
             for strategy_target in available_strategies:
                 # if they are not the same ...
                 if strategy_target != strategy_source:
@@ -139,10 +139,10 @@ class DefaultPlayer:
                     for p in range(payoffs_per_strategy):
                         # get the payoff for this iteration
                         payoff_for_strategy_source = strategy_source.payoff(p)
-                        payoff_for_strategy_taregt = strategy_target.payoff(p)
+                        payoff_for_strategy_target = strategy_target.payoff(p)
                         # .. compare their payoffs
-                        # print(f' comparing: {strategy_source}{payoff_for_strategy_source} vs {strategy_target}{payoff_for_strategy_taregt}')
-                        if payoff_for_strategy_source >= payoff_for_strategy_taregt:
+                        # print(f' comparing: {strategy_source}{payoff_for_strategy_source} vs {strategy_target}{payoff_for_strategy_target}')
+                        if payoff_for_strategy_source >= payoff_for_strategy_target:
                             # print(f'          source better than target')
                             winner_count += 1
                     if winner_count == payoffs_per_strategy:
@@ -171,13 +171,13 @@ class DefaultPlayer:
         for o in range(payoffs_per_strategy):
             results = []
             for p in range(len(available_strategies)):
-                # create the result tupel, hence strategy and payoff
+                # create the result tuple, hence strategy and payoff
                 result = (self.strategy(p), self.strategy(p).payoff(o))
                 # add to the list of results against opponent strategy o
                 results.append(result)
 
             responses.append(results)
-            # sort by payoff and then get the strategy object from the minimum tupel ...
+            # sort by payoff and then get the strategy object from the minimum tuple ...
             worst_result = min(results, key=lambda item: item[1])[0]
             # ... and add that strategy to the best responses
             worst_responses.append(worst_result)
@@ -241,7 +241,7 @@ class Game:
         for o in range(len(opponent.strategy_set)):
             results = []
             for p in range(len(player.strategy_set)):
-                # create the result tupel, hence strategy and payoff
+                # create the result tuple, hence strategy and payoff
                 result = (player.strategy(p), player.strategy(p).payoff(o))
                 # add to the list of results against opponent strategy o
                 results.append(result)
@@ -276,13 +276,13 @@ class Game:
         for o in range(len(opponent.strategy_set)):
             results = []
             for p in range(len(player.strategy_set)):
-                # create the result tupel, hence strategy and payoff
+                # create the result tuple, hence strategy and payoff
                 result = (player.strategy(p), player.strategy(p).payoff(o))
                 # add to the list of results against opponent strategy o
                 results.append(result)
 
             responses.append(results)
-            # sort by payoff and then get the strategy obejt from the minimum tupel ...
+            # sort by payoff and then get the strategy object from the minimum tuple ...
             worst_result = min(results, key=lambda item: item[1])[0]
             # ... and add that strategy to the best responses
             worst_responses.append(worst_result)
@@ -309,7 +309,7 @@ class Game:
         checks for pure nash equilibria by identifying 'cells' where both payoffs are
         the best response
 
-        :return: if found, a list of NE in form of a tuple containg the strategies
+        :return: if found, a list of NE in form of a tuple containing the strategies
         :rtype: list[tuple[Strategy, Strategy]]
         """
 
@@ -318,15 +318,15 @@ class Game:
         opponent_strategy_set: list[Strategy] = self._opponent.strategy_set
         player_strategy_set: list[Strategy] = self._player.strategy_set
 
-        # result_matrix holding either true = best response, of false otherweise
-        player_startegy_size: int = self._player.strategy_set_size()
+        # result_matrix holding either true = best response, of false otherwise
+        player_strategy_size: int = self._player.strategy_set_size()
         opponent_strategy_size: int = self._opponent.strategy_set_size()
 
-        result_matrix = []
-        for p in range(player_startegy_size):
-            inner_list = []
+        result_matrix = list()
+        for p in range(player_strategy_size):
+            inner_list = list()
             for o in range(opponent_strategy_size):
-                entry = []
+                entry = list()
                 entry.append(player_strategy_set[p].payoff(o))
                 entry.append(False)
                 entry.append(opponent_strategy_set[o].payoff(p))
@@ -334,30 +334,49 @@ class Game:
                 inner_list.append(entry)
             result_matrix.append(inner_list)
 
-        # checking columns for best respose, hence comparing the first entries and setting the second
+        # to check for the player if there are dominant strategies, we need to get his best response 
+        # for every strategy 
         for o in range(opponent_strategy_size):
-            payoffs = []
-            for p in range(player_startegy_size):
-                # get each entry list
+            payoffs = list()
+            for p in range(player_strategy_size):
+                # get each entry and add it to the payoff list
                 payoffs.append(result_matrix[p][o][0])
-            for p in range(player_startegy_size):
-                result_matrix[p][o][1] = is_biggest_in_list(
-                    result_matrix[p][o][0], payoffs
-                )
+            # print(f"   rows payoffs: {payoffs}")
+            for p in range(player_strategy_size):
+                result = is_biggest_in_list(result_matrix[p][o][0], payoffs)
+                result_matrix[p][o][1] = result
 
-        # checking now the rows for responses, hence checking the third entries and setting the fourth
-        for p in range(player_startegy_size):
-            payoffs = []
+        # print(result_matrix)
+
+        # checking now the columns for responses, hence checking the third entries and setting the fourth
+        for p in range(player_strategy_size):
+            payoffs = list()
             for o in range(opponent_strategy_size):
                 # get each entry list
                 payoffs.append(result_matrix[p][o][2])
-            for o in range(player_startegy_size):
-                result_matrix[p][o][3] = is_biggest_in_list(
-                    result_matrix[p][o][2], payoffs
-                )
+            # print(f"   columns payoffs: {payoffs}")
+            for o in range(opponent_strategy_size):
+                # print(f"      testing {result_matrix[p][o][2]} against {payoffs}: {is_biggest_in_list(result_matrix[p][o][2], payoffs)}")
+                result = is_biggest_in_list(result_matrix[p][o][2], payoffs)
+                result_matrix[p][o][3] = result
+
+        # print(result_matrix)
+        header = list()
+        for strategy in opponent_strategy_set:
+            header.append(strategy.name)
+
+        data = list()
+        for p in range(player_strategy_size):
+            row = list()
+            row.append(player_strategy_set[p].name)
+            for o in range(opponent_strategy_size):
+                row.append((result_matrix[p][o][1],result_matrix[p][o][3]))
+            data.append(row)
+
+        print(tabulate(data, header, tablefmt="grid", stralign="center"))
 
         # a nash equilibrium is a cell which has all entries set to true
-        for p in range(player_startegy_size):
+        for p in range(player_strategy_size):
             for o in range(opponent_strategy_size):
                 if result_matrix[p][o][1] and result_matrix[p][o][3]:
                     nash_equilibria.append(
@@ -371,12 +390,12 @@ class Game:
         note: when using "weakly", different outcomes are possible, so the one that the
         algorithm creates, might not be the only possible outcome - only one.
 
-        This methode does not return anything, it has only the sideeffect of printing out
+        This method does not return anything, it has only the side_effect of printing out
         the different steps taken.
 
-        You can afterwards use the print game methode to show the updated matrix
+        You can afterwards use the print game method to show the updated matrix
 
-        :param : boolean to hint if also weakly dominated strategoes shall be removed
+        :param : boolean to hint if also weakly dominated strategies shall be removed
         """
 
         counter = 0
@@ -399,7 +418,7 @@ class Game:
                 else:
                     if use_weakly:
                         # no strictly dominated strategy, so try weakly dominated strategy
-                        wds = player.weakly_domiated_strategy()
+                        wds = player.weakly_dominated_strategy()
                         if len(wds) > 0:
                             for strategy in wds:
                                 print(
@@ -444,12 +463,12 @@ class Game:
         elif len(other_player.strategy_set) == 3:
             return oddments3(strategy_set)
         else:
-            raise ValueError("Only stratgy sets with a length of 2 or 3 are supportted")
+            raise ValueError("Only strategy sets with a length of 2 or 3 are supported")
 
     def remove_strategy(self, player: Player, strategy: Strategy) -> None:
         """
         removing a strategy means for the player to drop his/her strategy,
-        but also to remove the payoffs for the opponent for that startegy
+        but also to remove the payoffs for the opponent for that strategy
         """
         # get the index for the player, so we can clean up the other
         player_index = self._players.index(player)
@@ -463,6 +482,9 @@ class Game:
             # print(f"payoffs: {strategy.payoffs}, need to remove {strategy_index}")
             strategy.payoffs.pop(strategy_index)
 
+
+def find_dominant_strategies():
+    ...
 
 def all_entries_equal(iterator) -> bool:
     iterator = iter(iterator)
@@ -479,7 +501,7 @@ def is_biggest_in_list(n: int, list: list) -> bool:
 
 def minimaxi(strategy_set: list[Strategy]) -> tuple[float, float]:
     """
-    Methode to identfiy, if any, the saddle points of the provided strategy set
+    Method to identify, if any, the saddle points of the provided strategy set
     if both values computed by the algorithm are the same, the saddle point is found
     """
     rows_minimums = list()
@@ -518,14 +540,14 @@ def formula_2x2(strategy_set: list[Strategy]) -> tuple[float, float]:
 
 def oddments2(strategy_set: list[Strategy]) -> tuple[float, float]:
     """
-    Fiding the oddments of a strategy set with length 2
+    Finding the oddments of a strategy set with length 2
 
-    Note: this methode should not be used when the payoffs for one strategy are the same,
-    hence (0, 0), that causes the algorithm to fail and prodices a 100 to 0 distribution
+    Note: this method should not be used when the payoffs for one strategy are the same,
+    hence (0, 0), that causes the algorithm to fail and results in a 100 to 0 distribution
 
-    :raise: ValueError when one of the oddemnts is zero
+    :raise: ValueError when one of the oddments is zero
     :return: a tuple of the suggested distribution amongst the strategy set, should sum up to 1
-    :rtype : tuple[float, foat]
+    :rtype : tuple[float, float]
     """
     if len(strategy_set) != 2:
         raise ValueError("Strategy set must have a length of 2")
@@ -544,16 +566,16 @@ def oddments2(strategy_set: list[Strategy]) -> tuple[float, float]:
 
 def oddments3(strategy_set: list[Strategy]) -> tuple[float, float, float]:
     """
-    Fiding the oddments of a strategy set with length 3
+    Finding the oddments of a strategy set with length 3
 
-    Using stratehy sets of length 3, the algorithm look a bit different, ass we need
-    to first calculate the colum differences, and then use those to get the oddments
+    Using strategy sets of length 3, the algorithm look a bit different, ass we need
+    to first calculate the column differences, and then use those to get the oddments
 
     :return: a tuple of the suggested distribution amongst the strategy set, should sum up to 1
-    :rtype : tuple[float, foat, float]
+    :rtype : tuple[float, float, float]
     """
     if len(strategy_set) != 3:
-        raise ValueError("Stratgy set must have a length of 3")
+        raise ValueError("Strategy set must have a length of 3")
 
     c1c2 = list()
     c2c3 = list()
