@@ -129,7 +129,7 @@ def test_is_biggest_in_list():
     assert is_biggest_in_list(0, (2, 2, 0)) == False
 
 
-def test_prison_dilema():
+def test_prison_dilemma():
     player = Player("P", "(10, 1), (25, 3)")
     opponent = Opponent("O", "(10, 1), (25, 3)")
 
@@ -145,15 +145,15 @@ def test_prison_dilema():
 def test_weakly_dominated_strategy():
     player = Player("P", "(10, 1), (10, 1)")
     result_list = [player.strategy(1), player.strategy(0)]
-    assert player.weakly_domiated_strategy() == result_list
+    assert player.weakly_dominated_strategy() == result_list
 
     player = Player("P", "(10, 1), (10, 2)")
     result_list = [player.strategy(0)]
-    assert player.weakly_domiated_strategy() == result_list
+    assert player.weakly_dominated_strategy() == result_list
 
     player = Player("P", "(10, 1), (1, 10)")
     result_list = []
-    assert player.weakly_domiated_strategy() == result_list
+    assert player.weakly_dominated_strategy() == result_list
 
 
 def test_strictly_dominated_strategy():
