@@ -15,6 +15,8 @@ I was taking the ECON 159 by Prof Ben Polak (link) and thought, that it might be
 
 So I have implemented some classes and some algorithms to mimic the process of solving payoff matrices by iterated elimination of dominated strategies.
 
+Further intro to [Game Theory](/SSRN-id1968579.pdf)
+
 ## About The Project
 
 The idea of this project has been to not only implement the algorithms, but build an object oriented structure above it. So we have a "game" which is played by two players, a "player" and an "opponent". The players have a common root in the DefaultPlayer which holds the strategy set. A strategy set is a list of "strategies" which themselves have a name and a list of payoffs.
