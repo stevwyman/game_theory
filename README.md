@@ -17,6 +17,14 @@ So I have implemented some classes and some algorithms to mimic the process of s
 
 Further intro to [Game Theory](/SSRN-id1968579.pdf)
 
+There are two famous algorithms for finding NE:
+* LCP (Linear Complementarity) formulation
+  * Lemke-Howson 1964
+* Support Enumeration Method
+  * Porter et al. 2004
+
+
+
 ## About The Project
 
 The idea of this project has been to not only implement the algorithms, but build an object oriented structure above it. So we have a "game" which is played by two players, a "player" and an "opponent". The players have a common root in the DefaultPlayer which holds the strategy set. A strategy set is a list of "strategies" which themselves have a name and a list of payoffs.
@@ -55,8 +63,8 @@ optional arguments:
 
 There are two python files:
 
-1. project.py - which holds the main methode
-2. game.py - which holds the representaion of gam, player and algorithms
+1. project.py - which holds the main method
+2. game.py - which holds the representation of gam, player and algorithms
 
 A game:
 
@@ -109,7 +117,7 @@ opponent = (0, 0), (2, 2)
 So I have prepared already some files in advance for myself:
 
 ```ini
-1. prinoners-dilemma.ini
+1. prisoners-dilemma.ini
    The famous tell or not tell
 2. beer.ini
    a well documented exercise on the web
