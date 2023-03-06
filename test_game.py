@@ -133,18 +133,16 @@ def test_prison_dilemma():
     player = Player("P", "(10, 1), (25, 3)")
     opponent = Opponent("O", "(10, 1), (25, 3)")
 
-    game = Game(player, opponent)
+    assert f"{player.strictly_dominant_strategy()}" == "[P_S1 [25.0, 3.0]]"
+    assert f"{opponent.strictly_dominant_strategy()}" == "[O_S1 [25.0, 3.0]]"
 
-    assert f"{game.strictly_dominating_strategy(0,1)}" == "P_S1 [25, 3]"
-    assert f"{game.strictly_dominating_strategy(1,0)}" == "O_S1 [25, 3]"
-
-    assert f"{game.strictly_dominated_strategy(0,1)}" == "P_S0 [10, 1]"
-    assert f"{game.strictly_dominated_strategy(1,0)}" == "O_S0 [10, 1]"
+    assert f"{player.strictly_dominated_strategy()}" == "[P_S0 [10.0, 1.0]]"
+    assert f"{opponent.strictly_dominated_strategy()}" == "[O_S0 [10.0, 1.0]]"
 
 
 def test_weakly_dominated_strategy():
     player = Player("P", "(10, 1), (10, 1)")
-    result_list = [player.strategy(1), player.strategy(0)]
+    result_list = [player.strategy(0), player.strategy(1)]
     assert player.weakly_dominated_strategy() == result_list
 
     player = Player("P", "(10, 1), (10, 2)")

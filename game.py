@@ -114,78 +114,126 @@ class DefaultPlayer:
 
     def weakly_dominated_strategy(self) -> list[Strategy]:
         """
-        Weakly dominated strategy: This is a strategy that delivers an equal or worse outcome than an alternative strategy.
+        Weakly dominated strategy: This is a strategy that delivers an equal or worse outcome 
+        than an alternative strategy.
 
         :return: a list holding all the weakly dominated strategies for this player
         :rtype: list
         """
-        # is any of the strategies always better than <b>one</b> of the other strategies
-        # check each against all others
-        payoffs_per_strategy = len(self._strategy_set[0].payoffs)
-        available_strategies = self._strategy_set
+
+        payoffs_per_strategy: int = len(self._strategy_set[0].payoffs)
+        available_strategies: list[Strategy] = self._strategy_set
         weakly_dominated_strategies: list[Strategy] = []
 
         if len(available_strategies) < 2:
             return weakly_dominated_strategies
 
-        # select one of the strategies
-        for strategy_source in available_strategies:
-            # select one of the others
-            for strategy_target in available_strategies:
-                # if they are not the same ...
-                if strategy_target != strategy_source:
-                    # go through all of the iterations ...
-                    winner_count = 0
-                    for p in range(payoffs_per_strategy):
-                        # get the payoff for this iteration
-                        payoff_for_strategy_source = strategy_source.payoff(p)
-                        payoff_for_strategy_target = strategy_target.payoff(p)
-                        # .. compare their payoffs
-                        # print(f' comparing: {strategy_source}{payoff_for_strategy_source} vs {strategy_target}{payoff_for_strategy_target}')
-                        if payoff_for_strategy_source >= payoff_for_strategy_target:
-                            # print(f'          source better than target')
-                            winner_count += 1
-                    if winner_count == payoffs_per_strategy:
-                        # print(f'  {strategy_source} always beats {strategy_target}')
-                        weakly_dominated_strategies.append(strategy_target)
+        for strategy_under_test in available_strategies:
+            for strategy_to_test in available_strategies:
+                if strategy_under_test != strategy_to_test:
+                    # counter for the dominance cases
+                    weakly_dominates = 0
+                    for index in range(payoffs_per_strategy):
+                        # is the outcome equal or worse
+                        if strategy_under_test.payoff(index) <= strategy_to_test.payoff(index):
+                            weakly_dominates += 1
+                    
+                    # if all payoffs are equal or worse, then the strategy under test is weakly dominated by the strategy to test
+                    if weakly_dominates == payoffs_per_strategy:
+                        if strategy_under_test not in weakly_dominated_strategies:
+                            weakly_dominated_strategies.append(strategy_under_test)
+
 
         return weakly_dominated_strategies
 
     def strictly_dominated_strategy(self) -> list[Strategy]:
         """
-        Strictly dominated strategy: This is a strategy that always delivers a worse outcome than an alternative strategy, regardless of what strategy the opponent chooses.
+        Strictly dominated strategy: This is a strategy that always delivers a worse outcome than an alternative strategy, 
+        regardless of what strategy the opponent chooses.
         """
-        payoffs_per_strategy = len(self._strategy_set[0].payoffs)
-        available_strategies = self._strategy_set
-        strictly_dominated_strategies: list[Strategy] = list()
+        payoffs_per_strategy: int = len(self._strategy_set[0].payoffs)
+        available_strategies: list[Strategy] = self._strategy_set
+        strictly_dominated_strategies: list[Strategy] = []
 
         if len(available_strategies) < 2:
             return strictly_dominated_strategies
 
-        # this list will hold the strategies, which are best responses to each of the opponents strategies
-        worst_responses = []
-
-        # list of lists holding the responses
-        responses = []
-
-        for o in range(payoffs_per_strategy):
-            results = []
-            for p in range(len(available_strategies)):
-                # create the result tuple, hence strategy and payoff
-                result = (self.strategy(p), self.strategy(p).payoff(o))
-                # add to the list of results against opponent strategy o
-                results.append(result)
-
-            responses.append(results)
-            # sort by payoff and then get the strategy object from the minimum tuple ...
-            worst_result = min(results, key=lambda item: item[1])[0]
-            # ... and add that strategy to the best responses
-            worst_responses.append(worst_result)
-
-        if all_entries_equal(worst_responses):
-            strictly_dominated_strategies.append(worst_responses[0])
+        for strategy_under_test in available_strategies:
+            for strategy_to_test in available_strategies:
+                if strategy_under_test != strategy_to_test:
+                    # counter for the dominance cases
+                    strictly_dominates = 0
+                    for index in range(payoffs_per_strategy):
+                        # is the outcome worse
+                        if strategy_under_test.payoff(index) < strategy_to_test.payoff(index):
+                            strictly_dominates += 1
+                    
+                    # if all payoffs are equal or worse, then the strategy under test is weakly dominated by the strategy to test
+                    if strictly_dominates == payoffs_per_strategy:
+                        if strategy_under_test not in strictly_dominated_strategies:
+                            strictly_dominated_strategies.append(strategy_under_test)
 
         return strictly_dominated_strategies
+
+    def weakly_dominant_strategy(self) -> list[Strategy]:
+        """
+        A strategy is weakly dominant if it leads to equal or better outcomes than alternative strategies.
+
+        :return: a list holding all the weakly dominated strategies for this player
+        :rtype: list
+        """
+
+        payoffs_per_strategy: int = len(self._strategy_set[0].payoffs)
+        available_strategies: list[Strategy] = self._strategy_set
+        weakly_dominant_strategies: list[Strategy] = []
+
+        if len(available_strategies) < 2:
+            return weakly_dominant_strategies
+
+        for strategy_under_test in available_strategies:
+            for strategy_to_test in available_strategies:
+                if strategy_under_test != strategy_to_test:
+                    # counter for the dominance cases
+                    weakly_dominant = 0
+                    for index in range(payoffs_per_strategy):
+                        # is the outcome equal or worse
+                        if strategy_under_test.payoff(index) >= strategy_to_test.payoff(index):
+                            weakly_dominant += 1
+                    
+                    # if all payoffs are equal or worse, then the strategy under test is weakly dominated by the strategy to test
+                    if weakly_dominant == payoffs_per_strategy:
+                        if strategy_under_test not in weakly_dominant_strategies:
+                            weakly_dominant_strategies.append(strategy_under_test)
+
+        return weakly_dominant_strategies
+
+    def strictly_dominant_strategy(self) -> list[Strategy]:
+        """
+        A strategy is strictly (or strongly) dominant if it leads to better outcomes than alternative strategies.
+        """
+        payoffs_per_strategy: int = len(self._strategy_set[0].payoffs)
+        available_strategies: list[Strategy] = self._strategy_set
+        strictly_dominant_strategies: list[Strategy] = []
+
+        if len(available_strategies) < 2:
+            return strictly_dominant_strategies
+
+        for strategy_under_test in available_strategies:
+            for strategy_to_test in available_strategies:
+                if strategy_under_test != strategy_to_test:
+                    # counter for the dominance cases
+                    strictly_dominant = 0
+                    for index in range(payoffs_per_strategy):
+                        # is the outcome worse
+                        if strategy_under_test.payoff(index) > strategy_to_test.payoff(index):
+                            strictly_dominant += 1
+                    
+                    # if all payoffs are equal or worse, then the strategy under test is weakly dominated by the strategy to test
+                    if strictly_dominant == payoffs_per_strategy:
+                        if strategy_under_test not in strictly_dominant_strategies:
+                            strictly_dominant_strategies.append(strategy_under_test)
+
+        return strictly_dominant_strategies
 
 
 class Player(DefaultPlayer):
@@ -224,73 +272,6 @@ class Game:
             data.append(tpp)
 
         return tabulate(data, header, tablefmt="grid", stralign="center")
-
-    def strictly_dominating_strategy(
-        self, player_index: int, opponent_index: int
-    ) -> Optional[Strategy]:
-        """
-        :return: if found, a strictly dominated strategy
-        :rtype: Strategy
-        """
-        player = self._players[player_index]
-        opponent = self._players[opponent_index]
-
-        # this list will hold the strategies, which are best responses to each of the opponents strategies
-        best_responses = []
-
-        for o in range(len(opponent.strategy_set)):
-            results = []
-            for p in range(len(player.strategy_set)):
-                # create the result tuple, hence strategy and payoff
-                result = (player.strategy(p), player.strategy(p).payoff(o))
-                # add to the list of results against opponent strategy o
-                results.append(result)
-
-            # get the strategy which has the highest payoff ...
-            best_result = max(results, key=lambda item: item[1])[0]
-            # ... and add that strategy to the best responses
-            best_responses.append(best_result)
-
-        if all_entries_equal(best_responses):
-            return best_responses[0]
-        else:
-            return None
-
-    def strictly_dominated_strategy(
-        self, player_index: int, opponent_index: int
-    ) -> Optional[Strategy]:
-        """
-
-        :return: the strictly dominated strategy if found, None else
-        :rtype: Strategy
-        """
-        player = self._players[player_index]
-        opponent = self._players[opponent_index]
-
-        # this list will hold the strategies, which are best responses to each of the opponents strategies
-        worst_responses = []
-
-        # list of lists holding the responses
-        responses = []
-
-        for o in range(len(opponent.strategy_set)):
-            results = []
-            for p in range(len(player.strategy_set)):
-                # create the result tuple, hence strategy and payoff
-                result = (player.strategy(p), player.strategy(p).payoff(o))
-                # add to the list of results against opponent strategy o
-                results.append(result)
-
-            responses.append(results)
-            # sort by payoff and then get the strategy object from the minimum tuple ...
-            worst_result = min(results, key=lambda item: item[1])[0]
-            # ... and add that strategy to the best responses
-            worst_responses.append(worst_result)
-
-        if all_entries_equal(worst_responses):
-            return worst_responses[0]
-        else:
-            return None
 
     @property
     def players(self):

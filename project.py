@@ -1,4 +1,4 @@
-from game import Game, Player, Opponent
+from game import Game, Player, Opponent, Strategy
 from sys import exit
 import os
 import configparser
@@ -15,8 +15,73 @@ def main():
     print("Commencing analysis of the following game/payoff matrix:")
     print(game)
 
-    print(f"Strictly dominating strategy for player: {game.strictly_dominating_strategy(0,1)}")
-    print(f"Strictly dominating strategy for opponent: {game.strictly_dominating_strategy(1,0)}")
+    print("Analysing strict dominance ...")
+
+    p_sds: list[Strategy] = game.player.strictly_dominated_strategy();
+    if len(p_sds) > 0:
+        print(f"   player has {len(p_sds)} strictly dominated strategies:")
+        for strategy in p_sds:
+            print("      ", strategy.name)
+    else:
+        print("   player has no strictly dominated strategies")
+
+    p_strictly_dominant_strategies: list[Strategy] = game.player.strictly_dominant_strategy();
+    if len(p_strictly_dominant_strategies) > 0:
+        print(f"   player has {len(p_strictly_dominant_strategies)} strictly dominant strategies:")
+        for strategy in p_strictly_dominant_strategies:
+            print("      ", strategy.name)
+    else:
+        print("   player has no strictly dominant strategies")
+
+    o_sds: list[Strategy] = game.opponent.strictly_dominated_strategy();
+    if len(o_sds) > 0:
+        print(f"   opponent has {len(o_sds)} strictly dominated strategies:")
+        for strategy in o_sds:
+            print("      ", strategy.name)
+    else:
+        print("   opponent has no strictly dominated strategies")
+
+    o_strictly_dominant_strategies: list[Strategy] = game.opponent.strictly_dominant_strategy();
+    if len(o_strictly_dominant_strategies) > 0:
+        print(f"   opponent has {len(o_strictly_dominant_strategies)} strictly dominant strategies:")
+        for strategy in o_strictly_dominant_strategies:
+            print("      ", strategy.name)
+    else:
+        print("   opponent has no strictly dominant strategies")
+
+    print("Analysing weak dominance ...")
+
+    p_wds: list[Strategy] = game.player.weakly_dominated_strategy();
+    if len(p_wds) > 0:
+        print(f"   player has {len(p_wds)} weakly dominated strategies:")
+        for strategy in p_wds:
+            print("      ", strategy.name)
+    else:
+        print("   player has no weakly dominated strategies")
+
+    p_weakly_dominant_strategy: list[Strategy] = game.player.weakly_dominant_strategy();
+    if len(p_weakly_dominant_strategy) > 0:
+        print(f"   player has {len(p_weakly_dominant_strategy)} weakly dominant strategies:")
+        for strategy in p_weakly_dominant_strategy:
+            print("      ", strategy.name)
+    else:
+        print("   player has no weakly dominant strategies")
+
+    o_wds: list[Strategy] = game.opponent.weakly_dominated_strategy();
+    if len(o_wds) > 0:
+        print(f"   opponent has {len(o_wds)} weakly dominated strategies:")
+        for strategy in o_wds:
+            print("      ", strategy.name)
+    else:
+        print("   opponent has no weakly dominated strategies")
+
+    o_weakly_dominant_strategy: list[Strategy] = game.opponent.weakly_dominant_strategy();
+    if len(o_weakly_dominant_strategy) > 0:
+        print(f"   opponent has {len(o_weakly_dominant_strategy)} weakly dominant strategies:")
+        for strategy in o_weakly_dominant_strategy:
+            print("      ", strategy.name)
+    else:
+        print("   opponent has no weakly dominant strategies")      
 
     print()
     try:
