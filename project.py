@@ -143,6 +143,10 @@ def main(argv=None):
         _print_williams_mix(reduced)
         return
 
+    if args.lemke_howson:
+        _print_lemke_howson_mix(reduced, args.drop_label)
+        return
+
     _print_support_enumeration_mix(reduced)
 
 
@@ -164,6 +168,28 @@ def _print_williams_mix(game: Game) -> None:
 
     print(f"Approximate value of the game (row player): {value}")
     _print_mix(game, player_mix, opponent_mix)
+
+
+def _print_lemke_howson_mix(game: Game, drop_label) -> None:
+    print("Using Lemke–Howson complementary pivoting ...")
+    try:
+        if drop_label is None:
+            equilibria = game.lemke_howson_equilibria()
+        else:
+            equilibria = [game.lemke_howson_equilibrium(drop_label)]
+    except ValueError as ve:
+        print(ve)
+        exit(0)
+
+    if not equilibria:
+        print("... Lemke–Howson did not find an equilibrium.")
+        return
+
+    print(f"Found {len(equilibria)} NE (Lemke–Howson):")
+    for index, (player_mix, opponent_mix) in enumerate(equilibria, start=1):
+        if len(equilibria) > 1:
+            print(f"Mix {index}")
+        _print_mix(game, player_mix, opponent_mix)
 
 
 def _print_support_enumeration_mix(game: Game) -> None:
@@ -214,11 +240,27 @@ def parse_args(argv=None):
         help="approximate mixed strategies with Williams fictitious play (zero-sum / constant-sum games)",
     )
     parser.add_argument(
+        "--lemke-howson",
+        dest="lemke_howson",
+        action="store_true",
+        help="find Nash equilibria with the Lemke–Howson complementary pivoting algorithm",
+    )
+    parser.add_argument(
+        "--drop-label",
+        type=int,
+        default=None,
+        metavar="K",
+        help="Lemke–Howson starting label (default: try every label). Implies --lemke-howson.",
+    )
+    parser.add_argument(
         "-c",
         type=str,
         help="path to the *.ini file holding the payoffs (default: games/default.ini)",
     )
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if args.drop_label is not None:
+        args.lemke_howson = True
+    return args
 
 
 def load_game(config_path: str) -> Game:

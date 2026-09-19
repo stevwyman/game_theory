@@ -504,6 +504,24 @@ class Game:
         col_mix = tuple(count / col_total for count in colcnt)
         return row_mix, col_mix, value
 
+    def lemke_howson_equilibrium(
+        self, drop_label: int = 0
+    ) -> tuple[tuple[float, ...], tuple[float, ...]]:
+        """One Nash equilibrium found by Lemke–Howson, starting from `drop_label`."""
+        from lemke_howson import lemke_howson
+
+        player_payoffs, opponent_payoffs = self.payoff_matrices()
+        return lemke_howson(player_payoffs, opponent_payoffs, drop_label)
+
+    def lemke_howson_equilibria(
+        self,
+    ) -> list[tuple[tuple[float, ...], tuple[float, ...]]]:
+        """Distinct Nash equilibria reachable by Lemke–Howson from every label."""
+        from lemke_howson import lemke_howson_equilibria
+
+        player_payoffs, opponent_payoffs = self.payoff_matrices()
+        return lemke_howson_equilibria(player_payoffs, opponent_payoffs)
+
     def remove_strategy(self, player: Player, strategy: Strategy) -> None:
         """
         removing a strategy means for the player to drop his/her strategy,

@@ -6,6 +6,7 @@ A little tool that could support you by solving game theory matrices, aka payoff
 2. iterated deletion of (weakly) dominated strategies
 3. finding mixed Nash Equilibrium
   * support enumeration (Porter et al. 2004) for general-sum 2-player games of any size
+  * Lemke–Howson complementary pivoting (`--lemke-howson`) — finds equilibria on the path from a dropped label
   * by oddments -> 2x2 and 3x3 (lecture algorithms, still available as helpers)
   * by formula -> 2x2
   * Williams fictitious play (`--zero-sum`) for zero-sum / constant-sum games
@@ -20,8 +21,8 @@ Further intro to [Game Theory](/SSRN-id1968579.pdf)
 
 There are two famous algorithms for finding NE:
 
-* LCP (Linear Complementarity) formulation — Lemke-Howson 1964
-* Support Enumeration Method — Porter et al. 2004 (this is what `mixed_nash_equilibrium` uses)
+* LCP (Linear Complementarity) formulation — Lemke-Howson 1964 (`--lemke-howson`)
+* Support Enumeration Method — Porter et al. 2004 (this is the default mixed-NE solver)
 
 ## About The Project
 
@@ -47,21 +48,25 @@ Run `project.py` with the `*.ini` file that holds the payoffs:
 python project.py -c games/tennis.ini
 python project.py -c games/prisoners_dilemma.ini --use_weakly
 python project.py -c games/rock_paper_scissors.ini --zero-sum
+python project.py -c games/battle_of_the_sexes.ini --lemke-howson
 ```
 
 ```
-usage: project.py [-h] [--use_weakly] [--zero-sum] [-c C]
+usage: project.py [-h] [--use_weakly] [--zero-sum] [--lemke-howson]
+                  [--drop-label K] [-c C]
 
 Solve payoff matrices
 
 optional arguments:
-  -h, --help    show this help message and exit
-  --use_weakly  also delete weakly dominated strategies during iterated
-                deletion; this may drop some NE
-  --zero-sum    approximate mixed strategies with Williams fictitious play
-                (zero-sum / constant-sum games)
-  -c C          path to the *.ini file holding the payoffs
-                (default: games/default.ini)
+  -h, --help       show this help message and exit
+  --use_weakly     also delete weakly dominated strategies during iterated
+                   deletion; this may drop some NE
+  --zero-sum       approximate mixed strategies with Williams fictitious play
+                   (zero-sum / constant-sum games)
+  --lemke-howson   find Nash equilibria with Lemke–Howson complementary pivoting
+  --drop-label K   Lemke–Howson starting label (implies --lemke-howson)
+  -c C             path to the *.ini file holding the payoffs
+                   (default: games/default.ini)
 ```
 
 If `-c` is omitted, only `games/default.ini` is loaded. A game file is never mixed with another file's payoffs.
@@ -74,8 +79,9 @@ Python files:
 
 1. `project.py` — CLI and INI loading
 2. `game.py` — game / player / strategy types and solvers
-3. `williams.py` — fictitious play for zero-sum games
-4. `test_game.py` — pytest suite
+3. `lemke_howson.py` — complementary pivoting (Lemke–Howson 1964)
+4. `williams.py` — fictitious play for zero-sum games
+5. `test_game.py` — pytest suite
 
 A game:
 

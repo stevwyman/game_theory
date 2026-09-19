@@ -410,3 +410,57 @@ def test_game_setup_reads_c_flag():
     assert game.player.name == "Venus"
     assert args.use_weakly is False
     assert args.zero_sum is False
+    assert args.lemke_howson is False
+
+
+def test_lemke_howson_tennis():
+    from lemke_howson import lemke_howson
+
+    player = Player("Venus", "(50, 80), (90, 20)")
+    opponent = Opponent("Serena", "(50, 10), (20, 80)")
+    game = Game(player, opponent)
+    row_mix, col_mix = game.lemke_howson_equilibrium(0)
+    assert row_mix[0] == pytest.approx(0.7)
+    assert row_mix[1] == pytest.approx(0.3)
+    assert col_mix[0] == pytest.approx(0.6)
+    assert col_mix[1] == pytest.approx(0.4)
+
+    # every starting label reaches the unique mixed NE
+    for drop_label in range(4):
+        row_mix, col_mix = lemke_howson(
+            [[50, 80], [90, 20]], [[50, 20], [10, 80]], drop_label
+        )
+        assert row_mix[0] == pytest.approx(0.7)
+        assert col_mix[0] == pytest.approx(0.6)
+
+
+def test_lemke_howson_prisoners_dilemma():
+    player = Player("P", "(-2, -10), (0, -5)")
+    opponent = Opponent("O", "(-2, -10), (0, -5)")
+    game = Game(player, opponent)
+    equilibria = game.lemke_howson_equilibria()
+    assert len(equilibria) == 1
+    assert equilibria[0][0] == pytest.approx((0.0, 1.0))
+    assert equilibria[0][1] == pytest.approx((0.0, 1.0))
+
+
+def test_lemke_howson_rps_and_taxpayer():
+    player = Player("P", "(0, 1, -1), (-1, 0, 1), (1, -1, 0)")
+    opponent = Opponent("O", "(0, 1, -1), (-1, 0, 1), (1, -1, 0)")
+    game = Game(player, opponent)
+    row_mix, col_mix = game.lemke_howson_equilibrium()
+    assert row_mix == pytest.approx((1 / 3, 1 / 3, 1 / 3))
+    assert col_mix == pytest.approx((1 / 3, 1 / 3, 1 / 3))
+
+    player = Player("Auditor", "(2, 4), (4, 0)")
+    opponent = Opponent("TaxPayers", "(0, 0), (-10, 4)")
+    game = Game(player, opponent)
+    row_mix, col_mix = game.lemke_howson_equilibrium()
+    assert row_mix[0] == pytest.approx(2 / 7)
+    assert col_mix[0] == pytest.approx(2 / 3)
+
+
+def test_lemke_howson_drop_label_implies_flag():
+    _, args = game_setup(["-c", "games/tennis.ini", "--drop-label", "1"])
+    assert args.lemke_howson is True
+    assert args.drop_label == 1
