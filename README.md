@@ -5,25 +5,23 @@ A little tool that could support you by solving game theory matrices, aka payoff
 1. finding pure Nash Equilibrium
 2. iterated deletion of (weakly) dominated strategies
 3. finding mixed Nash Equilibrium
-  * by oddments -> 2x2 and 3x3
+  * support enumeration (Porter et al. 2004) for general-sum 2-player games of any size
+  * by oddments -> 2x2 and 3x3 (lecture algorithms, still available as helpers)
   * by formula -> 2x2
-  * by an algorithm that iterates simply n-times over the matrix and they identifies the oddments, note: this algorithm is still subject of work
+  * Williams fictitious play (`--zero-sum`) for zero-sum / constant-sum games
 
 ## Background
 
-I was taking the ECON 159 by Prof Ben Polak (link) and thought, that it might be some good practice to implement the lessons learned there and combine it with the lesson learned taking the CS50P.
+I was taking the ECON 159 by Prof Ben Polak and thought that it might be some good practice to implement the lessons learned there and combine it with the lesson learned taking the CS50P.
 
 So I have implemented some classes and some algorithms to mimic the process of solving payoff matrices by iterated elimination of dominated strategies.
 
 Further intro to [Game Theory](/SSRN-id1968579.pdf)
 
 There are two famous algorithms for finding NE:
-* LCP (Linear Complementarity) formulation
-  * Lemke-Howson 1964
-* Support Enumeration Method
-  * Porter et al. 2004
 
-
+* LCP (Linear Complementarity) formulation — Lemke-Howson 1964
+* Support Enumeration Method — Porter et al. 2004 (this is what `mixed_nash_equilibrium` uses)
 
 ## About The Project
 
@@ -31,40 +29,53 @@ The idea of this project has been to not only implement the algorithms, but buil
 
 ### Built With
 
-The little program is written entirely in Python and uses only the tabulate import for formatting the matrices output, and the configparser import to read and external init of the game.
+The program is written in Python. Runtime dependency: `tabulate` (pretty-print matrices). Tests use `pytest`. `configparser` is in the standard library.
 
 * [![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)](https://www.python.org/)
 
 ### Installation
 
-There is only one entry in the requirements.txt:
-
-1. tabulate, which is used to pretty the output of the matrices
+```sh
+pip install -r requirements.txt
+```
 
 ## Usage
 
-You only need to run the poject.py file with one argument, which is the *.ini file, that holds the payoffs for the different players:
+Run `project.py` with the `*.ini` file that holds the payoffs:
 
 ```sh
-usage: project.py [-h] [--use_weakly] [-c C]
+python project.py -c games/tennis.ini
+python project.py -c games/prisoners_dilemma.ini --use_weakly
+python project.py -c games/rock_paper_scissors.ini --zero-sum
+```
+
+```
+usage: project.py [-h] [--use_weakly] [--zero-sum] [-c C]
 
 Solve payoff matrices
 
 optional arguments:
   -h, --help    show this help message and exit
-  --use_weakly  use also weakly dominated strategies when using iterate deletion, note that this methode might
-                not find all NE
-  -c C          path to the *.ini file holding the payoffs, should be located in a folder called games
+  --use_weakly  also delete weakly dominated strategies during iterated
+                deletion; this may drop some NE
+  --zero-sum    approximate mixed strategies with Williams fictitious play
+                (zero-sum / constant-sum games)
+  -c C          path to the *.ini file holding the payoffs
+                (default: games/default.ini)
 ```
+
+If `-c` is omitted, only `games/default.ini` is loaded. A game file is never mixed with another file's payoffs.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Implementation details
 
-There are two python files:
+Python files:
 
-1. project.py - which holds the main method
-2. game.py - which holds the representation of gam, player and algorithms
+1. `project.py` — CLI and INI loading
+2. `game.py` — game / player / strategy types and solvers
+3. `williams.py` — fictitious play for zero-sum games
+4. `test_game.py` — pytest suite
 
 A game:
 
@@ -76,11 +87,11 @@ class Game:
         self._players = [self._player, self._opponent]
 ```
 
-The players inherit from the DefaultPlayer:
+The players inherit from DefaultPlayer:
 
 ```python
 class DefaultPlayer:
-    def __init__(self, name: str, payoffs_str: str):
+    def __init__(self, name: str, payoffs_str: str, strategy_prefix: str | None = None):
         self._name = name
         self._strategy_set = list()
 ```
@@ -94,11 +105,7 @@ class Strategy:
         self._payoffs = payoffs
 ```
 
-Aside from the algorithms and classes, the even more important point for me was the usability. Running command-line programs requires often some input. In this case the input would be the payoffs for each player. As there a multiple ways to provide them, either as list, or separated, or ..., the chances are high to have them wrongly formatted.
-
-The most convenient way for the user is to have them written a file and then simply pass the filename. This makes also easy to run the same configuration multiple times. So in order to provide a common format, rather than inventing the wheel new, I went for the .ini configuration.
-
-This gives you a lot of freedom setting up such configuration.
+Payoffs are read from an INI file so you can rerun the same game:
 
 ```ini
 [names]
@@ -114,23 +121,20 @@ player = (1, 1), (0, 0)
 opponent = (0, 0), (2, 2)
 ```
 
-So I have prepared already some files in advance for myself:
+`[names]` and `[strategies]` are optional. Missing names default to `P` / `O`. Missing strategy prefixes default to `{name}_S`, so strategies are named `P_S0`, `P_S1`, … If `[strategies] player = S`, strategies are named `S0`, `S1`, …
 
-```ini
-1. prisoners-dilemma.ini
-   The famous tell or not tell
-2. beer.ini
-   a well documented exercise on the web
-3. hannibal.ini
-   From the lecture ECON 159
-```
+Prepared examples in `games/`:
 
-Another point when it comes to iterated elimination is, that you can run the process not only for strictly dominated strategies, but also for weakly dominated. In the later case, you might delete some NASH equilibria, hence you might find some, but not all. Whereas eliminating only strictly dominated, you find the pure NE.
+1. `prisoners_dilemma.ini` — tell or not tell
+2. `beer.ini` — dominated-strategy pricing exercise
+3. `hannibal.ini` — from ECON 159
+4. `tennis.ini` — mixed-strategy lecture example
+5. `sharing.ini` — 4×4 general-sum game
 
-Therefore the method to solve the game, I have added an optional parameter, which limits the algorithm to only use strict dominance. And the default value is set to
+Iterated elimination can use only strict dominance (the default) or also weakly dominated strategies (`--use_weakly`). Weak deletion can drop some Nash equilibria, so it may find some but not all.
 
 ```sh
-use_weakly = True
+use_weakly = False
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

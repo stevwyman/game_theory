@@ -4,12 +4,9 @@ import os
 import configparser
 import argparse
 
-use_weakly = False
-PATH = os.path.dirname("games")
 
-
-def main():
-    game = game_setup()
+def main(argv=None):
+    game, args = game_setup(argv)
 
     # show the initial payoff matrix
     print("Commencing analysis of the following game/payoff matrix:")
@@ -17,7 +14,7 @@ def main():
 
     print("Analysing strict dominance ...")
 
-    p_sds: list[Strategy] = game.player.strictly_dominated_strategy();
+    p_sds: list[Strategy] = game.player.strictly_dominated_strategy()
     if len(p_sds) > 0:
         print(f"   player has {len(p_sds)} strictly dominated strategies:")
         for strategy in p_sds:
@@ -25,15 +22,19 @@ def main():
     else:
         print("   player has no strictly dominated strategies")
 
-    p_strictly_dominant_strategies: list[Strategy] = game.player.strictly_dominant_strategy();
+    p_strictly_dominant_strategies: list[Strategy] = (
+        game.player.strictly_dominant_strategy()
+    )
     if len(p_strictly_dominant_strategies) > 0:
-        print(f"   player has {len(p_strictly_dominant_strategies)} strictly dominant strategies:")
+        print(
+            f"   player has {len(p_strictly_dominant_strategies)} strictly dominant strategies:"
+        )
         for strategy in p_strictly_dominant_strategies:
             print("      ", strategy.name)
     else:
         print("   player has no strictly dominant strategies")
 
-    o_sds: list[Strategy] = game.opponent.strictly_dominated_strategy();
+    o_sds: list[Strategy] = game.opponent.strictly_dominated_strategy()
     if len(o_sds) > 0:
         print(f"   opponent has {len(o_sds)} strictly dominated strategies:")
         for strategy in o_sds:
@@ -41,9 +42,13 @@ def main():
     else:
         print("   opponent has no strictly dominated strategies")
 
-    o_strictly_dominant_strategies: list[Strategy] = game.opponent.strictly_dominant_strategy();
+    o_strictly_dominant_strategies: list[Strategy] = (
+        game.opponent.strictly_dominant_strategy()
+    )
     if len(o_strictly_dominant_strategies) > 0:
-        print(f"   opponent has {len(o_strictly_dominant_strategies)} strictly dominant strategies:")
+        print(
+            f"   opponent has {len(o_strictly_dominant_strategies)} strictly dominant strategies:"
+        )
         for strategy in o_strictly_dominant_strategies:
             print("      ", strategy.name)
     else:
@@ -51,7 +56,7 @@ def main():
 
     print("Analysing weak dominance ...")
 
-    p_wds: list[Strategy] = game.player.weakly_dominated_strategy();
+    p_wds: list[Strategy] = game.player.weakly_dominated_strategy()
     if len(p_wds) > 0:
         print(f"   player has {len(p_wds)} weakly dominated strategies:")
         for strategy in p_wds:
@@ -59,15 +64,17 @@ def main():
     else:
         print("   player has no weakly dominated strategies")
 
-    p_weakly_dominant_strategy: list[Strategy] = game.player.weakly_dominant_strategy();
+    p_weakly_dominant_strategy: list[Strategy] = game.player.weakly_dominant_strategy()
     if len(p_weakly_dominant_strategy) > 0:
-        print(f"   player has {len(p_weakly_dominant_strategy)} weakly dominant strategies:")
+        print(
+            f"   player has {len(p_weakly_dominant_strategy)} weakly dominant strategies:"
+        )
         for strategy in p_weakly_dominant_strategy:
             print("      ", strategy.name)
     else:
         print("   player has no weakly dominant strategies")
 
-    o_wds: list[Strategy] = game.opponent.weakly_dominated_strategy();
+    o_wds: list[Strategy] = game.opponent.weakly_dominated_strategy()
     if len(o_wds) > 0:
         print(f"   opponent has {len(o_wds)} weakly dominated strategies:")
         for strategy in o_wds:
@@ -75,13 +82,17 @@ def main():
     else:
         print("   opponent has no weakly dominated strategies")
 
-    o_weakly_dominant_strategy: list[Strategy] = game.opponent.weakly_dominant_strategy();
+    o_weakly_dominant_strategy: list[Strategy] = (
+        game.opponent.weakly_dominant_strategy()
+    )
     if len(o_weakly_dominant_strategy) > 0:
-        print(f"   opponent has {len(o_weakly_dominant_strategy)} weakly dominant strategies:")
+        print(
+            f"   opponent has {len(o_weakly_dominant_strategy)} weakly dominant strategies:"
+        )
         for strategy in o_weakly_dominant_strategy:
             print("      ", strategy.name)
     else:
-        print("   opponent has no weakly dominant strategies")      
+        print("   opponent has no weakly dominant strategies")
 
     print()
     try:
@@ -96,82 +107,153 @@ def main():
     else:
         print("No pure Nash Equilibrium identified.")
 
-    # try solving by iterated deletion
+    # IEDS mutates the matrix, so shrink a copy and keep the original game intact
     print()
 
     print("Conducting iterated deletion of dominated, strategies ...")
-    if use_weakly:
+    if args.use_weakly:
         print("... including weakly dominated strategies ...")
-    game.solve_by_iterated_deletion(use_weakly=use_weakly)
+    reduced = game.copy()
+    reduced.solve_by_iterated_deletion(use_weakly=args.use_weakly)
 
     # print the resulting payoff matrix
     print()
-    print(game)
+    print(reduced)
 
     print()
     print("Looking for mixed NE ...")
+    if (
+        reduced.player.strategy_set_size() < 2
+        or reduced.opponent.strategy_set_size() < 2
+    ):
+        print(
+            "IEDS reduced the game to a unique remaining profile; "
+            "that cell is a pure NE, so no mixed strategy is needed."
+        )
+        if (
+            reduced.player.strategy_set_size() == 1
+            and reduced.opponent.strategy_set_size() == 1
+        ):
+            print(
+                f"   {reduced.player.strategy(0).name} vs {reduced.opponent.strategy(0).name}"
+            )
+        return
+
+    if args.zero_sum:
+        _print_williams_mix(reduced)
+        return
+
+    _print_support_enumeration_mix(reduced)
+
+
+def _print_williams_mix(game: Game) -> None:
+    if not game.is_constant_sum():
+        print(
+            "Williams fictitious play is for zero-sum / constant-sum games; "
+            "this payoff matrix is not constant-sum. Falling back to support enumeration."
+        )
+        _print_support_enumeration_mix(game)
+        return
+
+    print("Using Williams fictitious play (zero-sum / constant-sum approximation) ...")
     try:
-        player_mix: list[float] = game.mixed_nash_equilibrium(game.player)
-        opponent_mix: list[float] = game.mixed_nash_equilibrium(game.opponent)
+        player_mix, opponent_mix, value = game.williams_mixed_equilibrium()
     except ValueError as ve:
         print(ve)
         exit(0)
 
-    if len(player_mix) > 0 and len(opponent_mix) > 0:
-        print(f"Mix for player")
-        for i in range(len(player_mix)):
-            print(
-                f"   {game.player} should mix {game.player.strategy(i)} with {player_mix[i]:.0%}"
-            )
-        print(f"Mix for opponent")
-        for j in range(len(opponent_mix)):
-            print(
-                f"   {game.opponent} should mix {game.opponent.strategy(j)} with {opponent_mix[j]:.0%}"
-            )
-    else:
-        print("... no mixed strategies identified")
+    print(f"Approximate value of the game (row player): {value}")
+    _print_mix(game, player_mix, opponent_mix)
 
 
-def game_setup() -> Game:
+def _print_support_enumeration_mix(game: Game) -> None:
+    try:
+        mixed = game.mixed_nash_equilibria()
+    except ValueError as ve:
+        print(ve)
+        exit(0)
+
+    if not mixed:
+        print(
+            "... no mixed Nash equilibrium identified "
+            "(remaining equilibria are pure)."
+        )
+        return
+
+    print(f"Found {len(mixed)} mixed NE (support enumeration):")
+    for index, (player_mix, opponent_mix) in enumerate(mixed, start=1):
+        if len(mixed) > 1:
+            print(f"Mix {index}")
+        _print_mix(game, player_mix, opponent_mix)
+
+
+def _print_mix(game: Game, player_mix, opponent_mix) -> None:
+    print(f"Mix for player")
+    for i, probability in enumerate(player_mix):
+        print(
+            f"   {game.player} should mix {game.player.strategy(i)} with {probability:.0%}"
+        )
+    print(f"Mix for opponent")
+    for j, probability in enumerate(opponent_mix):
+        print(
+            f"   {game.opponent} should mix {game.opponent.strategy(j)} with {probability:.0%}"
+        )
+
+
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Solve payoff matrices")
     parser.add_argument(
         "--use_weakly",
         action="store_true",
-        help="use also weakly dominated strategies when using iterate deletion, note that this method might not find all NE",
+        help="also delete weakly dominated strategies during iterated deletion; this may drop some NE",
+    )
+    parser.add_argument(
+        "--zero-sum",
+        dest="zero_sum",
+        action="store_true",
+        help="approximate mixed strategies with Williams fictitious play (zero-sum / constant-sum games)",
     )
     parser.add_argument(
         "-c",
         type=str,
-        help="path to the *.ini file holding the payoffs, should be located in a folder called games",
+        help="path to the *.ini file holding the payoffs (default: games/default.ini)",
     )
-    args = parser.parse_args()
+    return parser.parse_args(argv)
 
-    global use_weakly
-    use_weakly = args.use_weakly
 
-    try:
-        config = configparser.ConfigParser()
-        config.read(os.path.join(".", "games", "default.ini"))
-        if args.c:
-            dataset = config.read(os.path.join(".", args.c))
-            if len(dataset) != 1:
-                exit(f"{args.c} could not be found")
+def load_game(config_path: str) -> Game:
+    """Load a single INI file. Missing names/strategy prefixes use built-in defaults."""
+    config = configparser.ConfigParser()
+    loaded = config.read(config_path)
+    if len(loaded) != 1:
+        raise FileNotFoundError(f"{config_path} could not be found")
 
-        # init player
-        player_payoffs = config.get("payoffs", "player")
-        player_name = config.get("names", "player")
-        player = Player(player_name, player_payoffs)
+    player_payoffs = config.get("payoffs", "player")
+    opponent_payoffs = config.get("payoffs", "opponent")
+    player_name = config.get("names", "player", fallback="P")
+    opponent_name = config.get("names", "opponent", fallback="O")
+    player_prefix = config.get(
+        "strategies", "player", fallback=f"{player_name}_S"
+    )
+    opponent_prefix = config.get(
+        "strategies", "opponent", fallback=f"{opponent_name}_S"
+    )
 
-        # init opponent
-        opponent_payoffs = config.get("payoffs", "opponent")
-        opponent_name = config.get("names", "opponent")
-        opponent = Opponent(opponent_name, opponent_payoffs)
-
-    except BaseException as be:
-        exit(be)
-
-    # init the game
+    player = Player(player_name, player_payoffs, strategy_prefix=player_prefix)
+    opponent = Opponent(
+        opponent_name, opponent_payoffs, strategy_prefix=opponent_prefix
+    )
     return Game(player, opponent)
+
+
+def game_setup(argv=None) -> tuple[Game, argparse.Namespace]:
+    args = parse_args(argv)
+    config_path = args.c if args.c else os.path.join(".", "games", "default.ini")
+    try:
+        game = load_game(config_path)
+    except (OSError, ValueError, configparser.Error) as error:
+        exit(error)
+    return game, args
 
 
 if __name__ == "__main__":
