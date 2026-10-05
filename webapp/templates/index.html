@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Game theory solver</title>
+    <link rel="stylesheet" href="/static/vendor/patternfly.min.css" />
+    <link rel="stylesheet" href="/static/app.css" />
+    <script src="/static/theme.js"></script>
+  </head>
+  <body>
+    <div class="pf-v5-c-page" id="page">
+      <a class="pf-v5-c-skip-to-content pf-v5-c-button pf-m-primary" href="#main">Skip to content</a>
+      <header class="pf-v5-c-masthead" id="page-masthead">
+        <div class="pf-v5-c-masthead__main">
+          <div class="pf-v5-c-masthead__brand">
+            <p class="pf-v5-c-title pf-m-lg">Game theory solver</p>
+          </div>
+        </div>
+        <div class="pf-v5-c-masthead__content app-masthead-content">
+          <p class="pf-v5-c-content app-subtitle">Two-player normal-form payoff matrices</p>
+          <div class="pf-v5-c-toggle-group app-theme-switch" role="group" aria-label="Color theme">
+            <div class="pf-v5-c-toggle-group__item">
+              <button class="pf-v5-c-toggle-group__button" type="button" data-theme-mode="light" aria-pressed="false">Light</button>
+            </div>
+            <div class="pf-v5-c-toggle-group__item">
+              <button class="pf-v5-c-toggle-group__button" type="button" data-theme-mode="auto" aria-pressed="true">Auto</button>
+            </div>
+            <div class="pf-v5-c-toggle-group__item">
+              <button class="pf-v5-c-toggle-group__button" type="button" data-theme-mode="dark" aria-pressed="false">Dark</button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main class="pf-v5-c-page__main" id="main" tabindex="-1">
+        <section class="pf-v5-c-page__main-section pf-m-limit-width">
+          <div class="pf-v5-c-page__main-body">
+            <div class="pf-v5-l-stack pf-m-gutter">
+              <div class="pf-v5-l-stack__item">
+                <div id="alert-region"></div>
+              </div>
+              <div class="pf-v5-l-stack__item">
+                <div class="pf-v5-l-grid pf-m-gutter app-workspace">
+                  <div class="pf-v5-l-grid__item pf-m-12-col pf-m-6-col-on-lg">
+                    <div class="pf-v5-c-card">
+                      <div class="pf-v5-c-card__header">
+                        <div class="pf-v5-c-card__title">
+                          <h1 class="pf-v5-c-card__title-text">Game</h1>
+                        </div>
+                      </div>
+                      <div class="pf-v5-c-card__body">
+                        <form id="game-form" class="pf-v5-c-form" novalidate>
+                          <div class="pf-v5-c-form__group">
+                            <div class="pf-v5-c-form__group-label">
+                              <label class="pf-v5-c-form__label" for="example">
+                                <span class="pf-v5-c-form__label-text">Example</span>
+                              </label>
+                            </div>
+                            <div class="pf-v5-c-form__group-control">
+                              <span class="pf-v5-c-form-control">
+                                <select id="example">
+                                  <option value="">Custom matrix</option>
+                                  {% for example in examples %}
+                                  <option value="{{ example.id }}">{{ example.label }}</option>
+                                  {% endfor %}
+                                </select>
+                              </span>
+                            </div>
+                          </div>
+                          <div class="pf-v5-l-grid pf-m-gutter">
+                            <div class="pf-v5-l-grid__item pf-m-6-col">
+                              <div class="pf-v5-c-form__group app-compact-field">
+                                <div class="pf-v5-c-form__group-label">
+                                  <label class="pf-v5-c-form__label" for="player-name">
+                                    <span class="pf-v5-c-form__label-text">Row player</span>
+                                  </label>
+                                </div>
+                                <div class="pf-v5-c-form__group-control">
+                                  <span class="pf-v5-c-form-control">
+                                    <input id="player-name" type="text" maxlength="40" value="P" />
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="pf-v5-l-grid__item pf-m-6-col">
+                              <div class="pf-v5-c-form__group app-compact-field">
+                                <div class="pf-v5-c-form__group-label">
+                                  <label class="pf-v5-c-form__label" for="opponent-name">
+                                    <span class="pf-v5-c-form__label-text">Column player</span>
+                                  </label>
+                                </div>
+                                <div class="pf-v5-c-form__group-control">
+                                  <span class="pf-v5-c-form-control">
+                                    <input id="opponent-name" type="text" maxlength="40" value="O" />
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="pf-v5-l-grid__item pf-m-6-col">
+                              <div class="pf-v5-c-form__group app-compact-field">
+                                <div class="pf-v5-c-form__group-label">
+                                  <label class="pf-v5-c-form__label" for="row-count">
+                                    <span class="pf-v5-c-form__label-text">Row strategies</span>
+                                  </label>
+                                </div>
+                                <div class="pf-v5-c-form__group-control">
+                                  <span class="pf-v5-c-form-control">
+                                    <input id="row-count" type="number" min="1" max="8" value="2" />
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="pf-v5-l-grid__item pf-m-6-col">
+                              <div class="pf-v5-c-form__group app-compact-field">
+                                <div class="pf-v5-c-form__group-label">
+                                  <label class="pf-v5-c-form__label" for="col-count">
+                                    <span class="pf-v5-c-form__label-text">Column strategies</span>
+                                  </label>
+                                </div>
+                                <div class="pf-v5-c-form__group-control">
+                                  <span class="pf-v5-c-form-control">
+                                    <input id="col-count" type="number" min="1" max="8" value="2" />
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="pf-v5-c-form__group">
+                            <div class="pf-v5-c-form__group-label">
+                              <span class="pf-v5-c-form__label">
+                                <span class="pf-v5-c-form__label-text">Payoff matrix</span>
+                              </span>
+                            </div>
+                            <div class="pf-v5-c-form__group-control">
+                              <p class="pf-v5-c-helper-text__item-text">Each cell is (row payoff | column payoff).</p>
+                              <div id="matrix-editor" class="app-matrix"></div>
+                            </div>
+                          </div>
+                          <div class="pf-v5-c-form__group">
+                            <div class="pf-v5-c-form__group-label">
+                              <label class="pf-v5-c-form__label" for="mixed-method">
+                                <span class="pf-v5-c-form__label-text">Mixed-strategy method</span>
+                              </label>
+                            </div>
+                            <div class="pf-v5-c-form__group-control">
+                              <span class="pf-v5-c-form-control">
+                                <select id="mixed-method">
+                                  <option value="support">Support enumeration</option>
+                                  <option value="lemke-howson">Lemke–Howson</option>
+                                  <option value="williams">Williams (constant-sum)</option>
+                                </select>
+                              </span>
+                            </div>
+                          </div>
+                          <div class="pf-v5-c-form__group">
+                            <div class="pf-v5-c-check">
+                              <input class="pf-v5-c-check__input" type="checkbox" id="use-weakly" />
+                              <label class="pf-v5-c-check__label" for="use-weakly">Also delete weakly dominated strategies</label>
+                            </div>
+                            <span class="pf-v5-c-helper-text">
+                              <span class="pf-v5-c-helper-text__item">
+                                Weak deletion can drop some Nash equilibria.
+                              </span>
+                            </span>
+                          </div>
+                          <div class="pf-v5-c-form__actions">
+                            <button class="pf-v5-c-button pf-m-primary" type="submit" id="solve-button">Solve</button>
+                            <button class="pf-v5-c-button pf-m-secondary" type="button" id="reset-button">Reset</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="pf-v5-l-grid__item pf-m-12-col pf-m-6-col-on-lg">
+                    <div id="results">
+                      <div class="pf-v5-c-empty-state pf-m-lg">
+                        <div class="pf-v5-c-empty-state__content">
+                          <div class="pf-v5-c-empty-state__header">
+                            <div class="pf-v5-c-empty-state__title">
+                              <h2 class="pf-v5-c-title pf-m-lg">No analysis yet</h2>
+                            </div>
+                            <div class="pf-v5-c-empty-state__body">
+                              Load an example or enter a payoff matrix, then solve.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

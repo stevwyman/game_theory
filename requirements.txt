@@ -1,2 +1,7 @@
 tabulate
 pytest
+fastapi
+uvicorn
+jinja2
+python-multipart
+httpx

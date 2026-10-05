@@ -71,6 +71,25 @@ optional arguments:
 
 If `-c` is omitted, only `games/default.ini` is loaded. A game file is never mixed with another file's payoffs.
 
+## Web app
+
+A PatternFly UI wraps the same solvers. Serve it with uvicorn:
+
+```sh
+pip install -r requirements.txt
+uvicorn webapp.app:app --host 127.0.0.1 --port 8080
+```
+
+`python -m webapp` starts the same uvicorn process. Open http://127.0.0.1:8080.
+
+The container image also runs uvicorn on port 8080 as a non-root user, with a read-only root filesystem:
+
+```sh
+docker compose up --build
+```
+
+The home page lets you load any `games/*.ini` example, edit the bimatrix, choose support enumeration, Lemke–Howson, or Williams, and run iterated deletion. Solve requests are validated (finite numbers, at most 8×8). OpenAPI docs are disabled.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Implementation details
@@ -81,7 +100,8 @@ Python files:
 2. `game.py` — game / player / strategy types and solvers
 3. `lemke_howson.py` — complementary pivoting (Lemke–Howson 1964)
 4. `williams.py` — fictitious play for zero-sum games
-5. `test_game.py` — pytest suite
+5. `webapp/` — PatternFly UI and JSON API
+6. `test_game.py` / `test_webapp.py` — pytest suite
 
 A game:
 

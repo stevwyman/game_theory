@@ -83,6 +83,29 @@ class DefaultPlayer:
                 f"Error while parsing payoffs for {name}: {payoffs_str}"
             ) from error
 
+    @classmethod
+    def from_payoff_matrix(
+        cls,
+        name: str,
+        payoffs: list[list[float]],
+        strategy_names: list[str] | None = None,
+    ):
+        """Build a player from a numeric payoff matrix and optional strategy names."""
+        instance = cls.__new__(cls)
+        instance._name = name
+        instance._strategy_set = []
+        for index, row in enumerate(payoffs):
+            if (
+                strategy_names
+                and index < len(strategy_names)
+                and str(strategy_names[index]).strip()
+            ):
+                label = str(strategy_names[index]).strip()
+            else:
+                label = f"{name}_S{index}"
+            instance._strategy_set.append(Strategy(label, [float(value) for value in row]))
+        return instance
+
     def __str__(self):
         """
         simply returns the name of the player
@@ -290,7 +313,31 @@ class Game:
         """Return a deep copy so IEDS can shrink a working copy of the matrix."""
         return deepcopy(self)
 
-    def pure_nash_equilibrium(self) -> list[tuple[Strategy, Strategy]]:
+    def best_response_grid(self) -> list[list[tuple[bool, bool]]]:
+        """
+        For each cell, (row player best-responds, column player best-responds).
+        A pure NE is a cell marked (True, True).
+        """
+        player_strategies = self._player.strategy_set
+        opponent_strategies = self._opponent.strategy_set
+        rows = len(player_strategies)
+        cols = len(opponent_strategies)
+        grid = [[(False, False) for _ in range(cols)] for _ in range(rows)]
+
+        for o in range(cols):
+            payoffs = [player_strategies[p].payoff(o) for p in range(rows)]
+            for p in range(rows):
+                player_br = is_biggest_in_list(player_strategies[p].payoff(o), payoffs)
+                grid[p][o] = (player_br, grid[p][o][1])
+
+        for p in range(rows):
+            payoffs = [opponent_strategies[o].payoff(p) for o in range(cols)]
+            for o in range(cols):
+                opponent_br = is_biggest_in_list(opponent_strategies[o].payoff(p), payoffs)
+                grid[p][o] = (grid[p][o][0], opponent_br)
+        return grid
+
+    def pure_nash_equilibrium(self, verbose: bool = True) -> list[tuple[Strategy, Strategy]]:
         """
         checks for pure nash equilibria by identifying 'cells' where both payoffs are
         the best response
@@ -298,80 +345,32 @@ class Game:
         :return: if found, a list of NE in form of a tuple containing the strategies
         :rtype: list[tuple[Strategy, Strategy]]
         """
+        grid = self.best_response_grid()
+        player_strategies = self._player.strategy_set
+        opponent_strategies = self._opponent.strategy_set
 
-        nash_equilibria: list[tuple[Strategy, Strategy]] = list()
-
-        opponent_strategy_set: list[Strategy] = self._opponent.strategy_set
-        player_strategy_set: list[Strategy] = self._player.strategy_set
-
-        # result_matrix holding either true = best response, of false otherwise
-        player_strategy_size: int = self._player.strategy_set_size()
-        opponent_strategy_size: int = self._opponent.strategy_set_size()
-
-        result_matrix = list()
-        for p in range(player_strategy_size):
-            inner_list = list()
-            for o in range(opponent_strategy_size):
-                entry = list()
-                entry.append(player_strategy_set[p].payoff(o))
-                entry.append(False)
-                entry.append(opponent_strategy_set[o].payoff(p))
-                entry.append(False)
-                inner_list.append(entry)
-            result_matrix.append(inner_list)
-
-        # to check for the player if there are dominant strategies, we need to get his best response 
-        # for every strategy 
-        for o in range(opponent_strategy_size):
-            payoffs = list()
-            for p in range(player_strategy_size):
-                # get each entry and add it to the payoff list
-                payoffs.append(result_matrix[p][o][0])
-            # print(f"   rows payoffs: {payoffs}")
-            for p in range(player_strategy_size):
-                result = is_biggest_in_list(result_matrix[p][o][0], payoffs)
-                result_matrix[p][o][1] = result
-
-        # print(result_matrix)
-
-        # checking now the columns for responses, hence checking the third entries and setting the fourth
-        for p in range(player_strategy_size):
-            payoffs = list()
-            for o in range(opponent_strategy_size):
-                # get each entry list
-                payoffs.append(result_matrix[p][o][2])
-            # print(f"   columns payoffs: {payoffs}")
-            for o in range(opponent_strategy_size):
-                # print(f"      testing {result_matrix[p][o][2]} against {payoffs}: {is_biggest_in_list(result_matrix[p][o][2], payoffs)}")
-                result = is_biggest_in_list(result_matrix[p][o][2], payoffs)
-                result_matrix[p][o][3] = result
-
-        # print(result_matrix)
-        header = list()
-        for strategy in opponent_strategy_set:
-            header.append(strategy.name)
-
-        data = list()
-        for p in range(player_strategy_size):
-            row = list()
-            row.append(player_strategy_set[p].name)
-            for o in range(opponent_strategy_size):
-                row.append((result_matrix[p][o][1],result_matrix[p][o][3]))
-            data.append(row)
-
-        print(tabulate(data, header, tablefmt="grid", stralign="center"))
-
-        # a nash equilibrium is a cell which has all entries set to true
-        for p in range(player_strategy_size):
-            for o in range(opponent_strategy_size):
-                if result_matrix[p][o][1] and result_matrix[p][o][3]:
-                    nash_equilibria.append(
-                        (player_strategy_set[p], opponent_strategy_set[o])
+        if verbose:
+            header = [""] + [strategy.name for strategy in opponent_strategies]
+            data = []
+            for p, row_marks in enumerate(grid):
+                row = [player_strategies[p].name]
+                for player_br, opponent_br in row_marks:
+                    row.append(
+                        f"P {player_br}, O {opponent_br}"
                     )
+                data.append(row)
+            print("Best-response marks: P = row player, O = column player.")
+            print("A pure NE is a cell marked P True, O True.")
+            print(tabulate(data, header, tablefmt="grid", stralign="center"))
 
-        return nash_equilibria
+        return [
+            (player_strategies[p], opponent_strategies[o])
+            for p, row_marks in enumerate(grid)
+            for o, (player_br, opponent_br) in enumerate(row_marks)
+            if player_br and opponent_br
+        ]
 
-    def solve_by_iterated_deletion(self, use_weakly=True) -> None:
+    def solve_by_iterated_deletion(self, use_weakly=True, verbose=True, log=None) -> None:
         """
         note: when using "weakly", different outcomes are possible, so the one that the
         algorithm creates, might not be the only possible outcome - only one.
@@ -384,16 +383,22 @@ class Game:
         :param : boolean to hint if also weakly dominated strategies shall be removed
         """
 
+        def emit(message: str) -> None:
+            if verbose:
+                print(message)
+            if log is not None:
+                log.append(message)
+
         counter = 0
         while True:
             # check each player for strictly dominated strategies and delete them
-            print(f"    iteration {counter}")
+            emit(f"    iteration {counter}")
             further_check_required = False
             for player in self._players:
                 sds = player.strictly_dominated_strategy()
                 if len(sds) > 0:
                     for strategy in sds:
-                        print(
+                        emit(
                             f"... found strictly dominated strategy ({strategy}) and remove it now"
                         )
                         try:
@@ -407,7 +412,7 @@ class Game:
                         wds = player.weakly_dominated_strategy()
                         if len(wds) > 0:
                             for strategy in wds:
-                                print(
+                                emit(
                                     f"... found weakly dominated strategy ({strategy}) and remove it now"
                                 )
                                 try:
@@ -416,12 +421,10 @@ class Game:
                                 except ValueError:
                                     pass
 
-            # print(f"check completed, another check required: {further_check_required}")
             if further_check_required:
-                # print("checking again")
                 counter += 1
             else:
-                print(f"... no further optimization found")
+                emit("... no further optimization found")
                 break
 
     def mixed_nash_equilibrium(self, player: Player) -> tuple[float, ...]:
@@ -484,7 +487,7 @@ class Game:
         return player_payoffs, opponent_payoffs
 
     def williams_mixed_equilibrium(
-        self, iterations: int = 1000
+        self, iterations: int = 5000
     ) -> tuple[tuple[float, ...], tuple[float, ...], float]:
         """
         Approximate mixed strategies by Williams fictitious play.

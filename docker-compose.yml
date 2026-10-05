@@ -1,0 +1,13 @@
+services:
+  web:
+    build: .
+    command: ["uvicorn", "webapp.app:app", "--host", "0.0.0.0", "--port", "8086"]
+    ports:
+      - "8086:8086"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      PYTHONUNBUFFERED: "1"

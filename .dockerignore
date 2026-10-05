@@ -1,0 +1,13 @@
+.git
+.cursor
+.pytest_cache
+__pycache__
+*.pyc
+.venv
+venv
+*.pdf
+.DS_Store
+.vscode
+canvases
+*.canvas.tsx
+.gitkeep

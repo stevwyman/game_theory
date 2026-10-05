@@ -246,6 +246,23 @@ def test_pure_nash_prisoners_dilemma():
     assert len(equilibria) == 1
     assert equilibria[0][0] is player.strategy(1)
     assert equilibria[0][1] is opponent.strategy(1)
+    assert game.best_response_grid() == [
+        [(False, False), (False, True)],
+        [(True, False), (True, True)],
+    ]
+
+
+def test_pure_ne_grid_print_is_labeled(capsys):
+    player = Player("P", "(-2, -10), (0, -5)")
+    opponent = Opponent("O", "(-2, -10), (0, -5)")
+    game = Game(player, opponent)
+    game.pure_nash_equilibrium(verbose=True)
+    printed = capsys.readouterr().out
+    assert "P_S0" in printed
+    assert "O_S1" in printed
+    assert "P True, O True" in printed
+    assert "P False, O False" in printed
+    assert "row player" in printed
 
 
 def test_pure_nash_battle_of_the_sexes():
@@ -357,6 +374,14 @@ def test_williams_constant_sum_tennis():
     row_mix, col_mix, _value = game.williams_mixed_equilibrium(iterations=2000)
     assert row_mix[0] == pytest.approx(0.7, abs=0.05)
     assert col_mix[0] == pytest.approx(0.6, abs=0.05)
+
+
+def test_williams_rock_paper_scissors_is_uniform():
+    game = load_game("games/rock_paper_scissors.ini")
+    row_mix, col_mix, value = game.williams_mixed_equilibrium()
+    assert row_mix == pytest.approx((1 / 3, 1 / 3, 1 / 3), abs=0.05)
+    assert col_mix == pytest.approx((1 / 3, 1 / 3, 1 / 3), abs=0.05)
+    assert value == pytest.approx(0, abs=0.05)
 
 
 def test_load_tennis_ini():

@@ -1,0 +1,119 @@
+:root {
+  --pf-v5-global--FontFamily--text: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --pf-v5-global--FontFamily--heading: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.app-subtitle {
+  margin: 0;
+  color: var(--pf-v5-global--Color--200);
+}
+
+.app-masthead-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.app-theme-switch {
+  flex-shrink: 0;
+}
+
+.app-workspace {
+  align-items: stretch;
+}
+
+.app-workspace > .pf-v5-l-grid__item {
+  min-width: 0;
+}
+
+.app-compact-field .pf-v5-c-form-control {
+  max-width: 8rem;
+}
+
+.app-matrix,
+.app-result-matrix {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.app-matrix table,
+.app-matrix .pf-v5-c-table,
+.app-result-matrix table,
+.app-result-matrix .pf-v5-c-table {
+  width: max-content;
+  max-width: 100%;
+  table-layout: auto;
+}
+
+.app-matrix th,
+.app-matrix td,
+.app-result-matrix th,
+.app-result-matrix td {
+  padding: 0.35rem 0.4rem;
+  white-space: nowrap;
+}
+
+.app-matrix th:first-child,
+.app-matrix td:first-child {
+  width: 1%;
+}
+
+.app-name-input {
+  box-sizing: border-box;
+  width: 4.75rem;
+  max-width: 4.75rem;
+  padding: 0.15rem 0.3rem;
+  border: 1px solid var(--pf-v5-global--BorderColor--100);
+  background: var(--pf-v5-global--BackgroundColor--100);
+  color: var(--pf-v5-global--Color--100);
+  font: inherit;
+}
+
+.app-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.app-cell input {
+  box-sizing: border-box;
+  width: 3.25rem;
+  min-width: 0;
+  padding: 0.15rem 0.25rem;
+  border: 1px solid var(--pf-v5-global--BorderColor--100);
+  background: var(--pf-v5-global--BackgroundColor--100);
+  color: var(--pf-v5-global--Color--100);
+  font: inherit;
+}
+
+.app-label-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+#alert-region:empty {
+  display: none;
+}
+
+#results .pf-v5-c-card + .pf-v5-c-card {
+  margin-top: 1rem;
+}
+
+.app-pure-ne {
+  font-weight: 600;
+  background: var(--pf-v5-global--palette--green-50, #f3faf2);
+}
+
+.pf-v5-theme-dark .app-pure-ne {
+  background: var(--pf-v5-global--palette--green-700, #3d7317);
+}
+
+@media (max-width: 768px) {
+  .app-masthead-content {
+    flex-wrap: wrap;
+  }
+}
