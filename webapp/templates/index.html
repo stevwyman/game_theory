@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Game theory solver</title>
+    <link rel="icon" href="/static/logo.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/vendor/patternfly.min.css" />
     <link rel="stylesheet" href="/static/app.css" />
     <script src="/static/theme.js"></script>
@@ -13,7 +14,8 @@
       <a class="pf-v5-c-skip-to-content pf-v5-c-button pf-m-primary" href="#main">Skip to content</a>
       <header class="pf-v5-c-masthead" id="page-masthead">
         <div class="pf-v5-c-masthead__main">
-          <div class="pf-v5-c-masthead__brand">
+          <div class="pf-v5-c-masthead__brand app-brand">
+            <img class="app-logo" src="/static/logo.svg" width="40" height="40" alt="" />
             <p class="pf-v5-c-title pf-m-lg">Game theory solver</p>
           </div>
         </div>
@@ -64,6 +66,30 @@
                                   <option value="{{ example.id }}">{{ example.label }}</option>
                                   {% endfor %}
                                 </select>
+                              </span>
+                            </div>
+                          </div>
+                          <div class="pf-v5-c-form__group">
+                            <div class="pf-v5-c-form__group-label">
+                              <label class="pf-v5-c-form__label" for="game-label">
+                                <span class="pf-v5-c-form__label-text">Title</span>
+                              </label>
+                            </div>
+                            <div class="pf-v5-c-form__group-control">
+                              <span class="pf-v5-c-form-control">
+                                <input id="game-label" type="text" maxlength="80" placeholder="Name this game to save it" />
+                              </span>
+                            </div>
+                          </div>
+                          <div class="pf-v5-c-form__group">
+                            <div class="pf-v5-c-form__group-label">
+                              <label class="pf-v5-c-form__label" for="game-description">
+                                <span class="pf-v5-c-form__label-text">Explanation</span>
+                              </label>
+                            </div>
+                            <div class="pf-v5-c-form__group-control">
+                              <span class="pf-v5-c-form-control">
+                                <textarea id="game-description" rows="4" maxlength="4000" placeholder="Optional lecture notes or story for this game"></textarea>
                               </span>
                             </div>
                           </div>
@@ -153,6 +179,91 @@
                             </div>
                           </div>
                           <div class="pf-v5-c-form__group">
+                            <div class="pf-v5-c-form__group-label">
+                              <span class="pf-v5-c-form__label">
+                                <span class="pf-v5-c-form__label-text">Repeated game</span>
+                              </span>
+                            </div>
+                            <div class="pf-v5-c-form__group-control">
+                              <div class="pf-v5-c-toggle-group" role="group" aria-label="Repeated game">
+                                <div class="pf-v5-c-toggle-group__item">
+                                  <button class="pf-v5-c-toggle-group__button pf-m-selected" type="button" data-repeat-mode="off" aria-pressed="true">One-shot</button>
+                                </div>
+                                <div class="pf-v5-c-toggle-group__item">
+                                  <button class="pf-v5-c-toggle-group__button" type="button" data-repeat-mode="finite" aria-pressed="false">Finite</button>
+                                </div>
+                                <div class="pf-v5-c-toggle-group__item">
+                                  <button class="pf-v5-c-toggle-group__button" type="button" data-repeat-mode="infinite" aria-pressed="false">Infinite</button>
+                                </div>
+                              </div>
+                              <input type="hidden" id="repeat-mode" value="off" />
+                            </div>
+                          </div>
+                          <div class="pf-v5-c-form__group" id="repeat-finite-fields" hidden>
+                            <div class="pf-v5-c-form__group-label">
+                              <label class="pf-v5-c-form__label" for="periods">
+                                <span class="pf-v5-c-form__label-text">Periods</span>
+                              </label>
+                            </div>
+                            <div class="pf-v5-c-form__group-control">
+                              <span class="pf-v5-c-form-control app-compact-field">
+                                <input id="periods" type="number" min="2" max="50" value="2" />
+                              </span>
+                              <span class="pf-v5-c-helper-text">
+                                <span class="pf-v5-c-helper-text__item">Finite unraveling, 2 to 50 periods.</span>
+                              </span>
+                            </div>
+                          </div>
+                          <div class="pf-v5-c-form__group" id="repeat-infinite-fields" hidden>
+                            <div class="pf-v5-l-grid pf-m-gutter">
+                              <div class="pf-v5-l-grid__item pf-m-4-col">
+                                <div class="pf-v5-c-form__group app-compact-field">
+                                  <div class="pf-v5-c-form__group-label">
+                                    <label class="pf-v5-c-form__label" for="discount">
+                                      <span class="pf-v5-c-form__label-text">Discount δ</span>
+                                    </label>
+                                  </div>
+                                  <div class="pf-v5-c-form__group-control">
+                                    <span class="pf-v5-c-form-control">
+                                      <input id="discount" type="number" min="0" max="0.999" step="0.05" value="0.6" />
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="pf-v5-l-grid__item pf-m-4-col">
+                                <div class="pf-v5-c-form__group app-compact-field">
+                                  <div class="pf-v5-c-form__group-label">
+                                    <label class="pf-v5-c-form__label" for="cooperate-row">
+                                      <span class="pf-v5-c-form__label-text">Cooperate row</span>
+                                    </label>
+                                  </div>
+                                  <div class="pf-v5-c-form__group-control">
+                                    <span class="pf-v5-c-form-control">
+                                      <input id="cooperate-row" type="number" min="0" max="7" placeholder="auto" />
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="pf-v5-l-grid__item pf-m-4-col">
+                                <div class="pf-v5-c-form__group app-compact-field">
+                                  <div class="pf-v5-c-form__group-label">
+                                    <label class="pf-v5-c-form__label" for="cooperate-col">
+                                      <span class="pf-v5-c-form__label-text">Cooperate column</span>
+                                    </label>
+                                  </div>
+                                  <div class="pf-v5-c-form__group-control">
+                                    <span class="pf-v5-c-form-control">
+                                      <input id="cooperate-col" type="number" min="0" max="7" placeholder="auto" />
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <span class="pf-v5-c-helper-text">
+                              <span class="pf-v5-c-helper-text__item">Leave cooperate cells empty to pick the best Pareto-improving cell.</span>
+                            </span>
+                          </div>
+                          <div class="pf-v5-c-form__group">
                             <div class="pf-v5-c-check">
                               <input class="pf-v5-c-check__input" type="checkbox" id="use-weakly" />
                               <label class="pf-v5-c-check__label" for="use-weakly">Also delete weakly dominated strategies</label>
@@ -165,6 +276,7 @@
                           </div>
                           <div class="pf-v5-c-form__actions">
                             <button class="pf-v5-c-button pf-m-primary" type="submit" id="solve-button">Solve</button>
+                            <button class="pf-v5-c-button pf-m-secondary" type="button" id="save-button">Save game</button>
                             <button class="pf-v5-c-button pf-m-secondary" type="button" id="reset-button">Reset</button>
                           </div>
                         </form>

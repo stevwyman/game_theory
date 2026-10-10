@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -6,11 +7,25 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from webapp.service import analyze, list_examples, load_example
+from webapp.service import analyze, list_examples, load_example, save_example
+from webapp.store import init_store
 
 BASE_DIR = Path(__file__).resolve().parent
 
-app = FastAPI(title="Game theory solver", docs_url=None, redoc_url=None, openapi_url=None)
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    init_store()
+    yield
+
+
+app = FastAPI(
+    title="Game theory solver",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+    lifespan=lifespan,
+)
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
@@ -65,6 +80,16 @@ def example(example_id: str):
         return load_example(example_id)
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@app.post("/api/games")
+def create_or_update_game(payload: dict):
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="JSON object required")
+    try:
+        return save_example(payload)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @app.post("/api/solve")

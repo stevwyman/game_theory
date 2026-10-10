@@ -1,14 +1,24 @@
 (() => {
   const form = document.getElementById("game-form");
   const exampleSelect = document.getElementById("example");
+  const gameLabel = document.getElementById("game-label");
+  const gameDescription = document.getElementById("game-description");
   const playerName = document.getElementById("player-name");
   const opponentName = document.getElementById("opponent-name");
   const rowCount = document.getElementById("row-count");
   const colCount = document.getElementById("col-count");
   const matrixEditor = document.getElementById("matrix-editor");
   const mixedMethod = document.getElementById("mixed-method");
+  const repeatMode = document.getElementById("repeat-mode");
+  const finiteFields = document.getElementById("repeat-finite-fields");
+  const infiniteFields = document.getElementById("repeat-infinite-fields");
+  const periods = document.getElementById("periods");
+  const discount = document.getElementById("discount");
+  const cooperateRow = document.getElementById("cooperate-row");
+  const cooperateCol = document.getElementById("cooperate-col");
   const useWeakly = document.getElementById("use-weakly");
   const solveButton = document.getElementById("solve-button");
+  const saveButton = document.getElementById("save-button");
   const resetButton = document.getElementById("reset-button");
   const results = document.getElementById("results");
   const alertRegion = document.getElementById("alert-region");
@@ -171,6 +181,8 @@
   }
 
   function applyGame(game) {
+    gameLabel.value = game.label || "";
+    gameDescription.value = game.description || "";
     playerName.value = game.player_name;
     opponentName.value = game.opponent_name;
     rowNames = game.player_strategies;
@@ -244,10 +256,45 @@
     results.replaceChildren(empty);
   }
 
+  function setRepeatMode(mode) {
+    const next = mode === "finite" || mode === "infinite" ? mode : "off";
+    repeatMode.value = next;
+    finiteFields.hidden = next !== "finite";
+    infiniteFields.hidden = next !== "infinite";
+    document.querySelectorAll("[data-repeat-mode]").forEach((button) => {
+      const selected = button.getAttribute("data-repeat-mode") === next;
+      button.classList.toggle("pf-m-selected", selected);
+      button.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
+  }
+
+  function optionalIndex(input) {
+    const text = input.value.trim();
+    if (!text) {
+      return undefined;
+    }
+    const value = Number.parseInt(text, 10);
+    return Number.isFinite(value) ? value : undefined;
+  }
+
+  function formatPayoffs(values) {
+    if (!values) {
+      return "";
+    }
+    return `(${values[0]} | ${values[1]})`;
+  }
+
   function resetGame() {
     exampleSelect.value = "";
+    gameLabel.value = "";
+    gameDescription.value = "";
     mixedMethod.value = "support";
     useWeakly.checked = false;
+    periods.value = "2";
+    discount.value = "0.6";
+    cooperateRow.value = "";
+    cooperateCol.value = "";
+    setRepeatMode("off");
     applyGame({
       player_name: DEFAULT_GAME.player_name,
       opponent_name: DEFAULT_GAME.opponent_name,
@@ -433,7 +480,133 @@
     });
     stack.appendChild(mixedCard.card);
 
+    if (data.repeated && data.repeated.mode !== "off") {
+      stack.appendChild(renderRepeated(data.repeated).card);
+    }
+
     results.replaceChildren(stack);
+  }
+
+  function renderRepeated(repeated) {
+    const repeatedCard = card("Repeated game");
+    const message = document.createElement("p");
+    message.textContent = repeated.message;
+    repeatedCard.body.appendChild(message);
+    if (repeated.mode === "finite") {
+      const periodsLine = document.createElement("p");
+      periodsLine.textContent = `Periods: ${repeated.periods}`;
+      repeatedCard.body.appendChild(periodsLine);
+      if (repeated.path && repeated.path.length) {
+        const first = repeated.path[0];
+        const path = document.createElement("p");
+        path.textContent = `SPNE path: ${first.player} vs ${first.opponent} in every period ${formatPayoffs(first.payoffs)}`;
+        repeatedCard.body.appendChild(path);
+        const totals = document.createElement("p");
+        totals.textContent = `Total payoffs: ${formatPayoffs(repeated.total_payoffs)}`;
+        repeatedCard.body.appendChild(totals);
+      } else if (repeated.last_period) {
+        const list = document.createElement("ul");
+        repeated.last_period.forEach((item) => {
+          const li = document.createElement("li");
+          li.textContent = `Last-period NE: ${item.player} vs ${item.opponent} ${formatPayoffs(item.payoffs)}`;
+          list.appendChild(li);
+        });
+        repeatedCard.body.appendChild(list);
+      }
+    }
+    if (repeated.mode === "infinite" && repeated.selected) {
+      const selected = repeated.selected;
+      const coop = document.createElement("p");
+      coop.textContent = `Cooperate: ${selected.cooperate.player} vs ${selected.cooperate.opponent} ${formatPayoffs(selected.cooperate.payoffs)}`;
+      repeatedCard.body.appendChild(coop);
+      if (selected.punishment) {
+        const punish = document.createElement("p");
+        const label = selected.punishment.player
+          ? `${selected.punishment.player} vs ${selected.punishment.opponent}`
+          : "mixed stage NE";
+        punish.textContent = `Punishment: ${label} ${formatPayoffs(selected.punishment.payoffs)}`;
+        repeatedCard.body.appendChild(punish);
+      }
+      if (selected.player) {
+        const temptation = document.createElement("p");
+        temptation.textContent = `Temptation: row ${selected.player.strategy} ${selected.player.payoff}, column ${selected.opponent.strategy} ${selected.opponent.payoff}`;
+        repeatedCard.body.appendChild(temptation);
+      }
+      if (selected.critical_delta !== null && selected.critical_delta !== undefined) {
+        const delta = document.createElement("p");
+        delta.textContent = `Critical δ* = ${selected.critical_delta}`;
+        repeatedCard.body.appendChild(delta);
+      }
+      const sustain = document.createElement("p");
+      sustain.textContent = selected.sustainable ? "Sustainable at this δ." : "Not sustainable at this δ.";
+      repeatedCard.body.appendChild(sustain);
+    }
+    return repeatedCard;
+  }
+
+  function currentGamePayload() {
+    readEditor();
+    return {
+      id: exampleSelect.value || undefined,
+      label: gameLabel.value,
+      description: gameDescription.value,
+      player_name: playerName.value,
+      opponent_name: opponentName.value,
+      player_strategies: rowNames,
+      opponent_strategies: colNames,
+      cells,
+    };
+  }
+
+  function replaceExampleOptions(examples, selectedId) {
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = "Custom matrix";
+    const options = [blank];
+    examples.forEach((example) => {
+      const option = document.createElement("option");
+      option.value = example.id;
+      option.textContent = example.label;
+      options.push(option);
+    });
+    exampleSelect.replaceChildren(...options);
+    exampleSelect.value = selectedId || "";
+  }
+
+  async function refreshExamples(selectedId) {
+    const response = await fetch("/api/examples");
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.detail || "Could not list games");
+    }
+    replaceExampleOptions(data.examples || [], selectedId);
+  }
+
+  async function saveGame() {
+    clearAlert();
+    if (!gameLabel.value.trim()) {
+      showAlert("Add a title before saving the game.", "danger");
+      return;
+    }
+    saveButton.disabled = true;
+    try {
+      const response = await fetch("/api/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(currentGamePayload()),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || "Could not save game");
+      }
+      applyGame(data);
+      await refreshExamples(data.id);
+      showAlert(`Saved “${data.label}”.`, "success");
+    } catch (error) {
+      showAlert(error.message, "danger");
+    } finally {
+      saveButton.disabled = false;
+    }
   }
 
   async function loadExample(exampleId) {
@@ -465,6 +638,11 @@
           cells,
           use_weakly: useWeakly.checked,
           mixed_method: mixedMethod.value,
+          repeat: repeatMode.value,
+          periods: repeatMode.value === "finite" ? Number(periods.value) : undefined,
+          discount: repeatMode.value === "infinite" ? Number(discount.value) : undefined,
+          cooperate_row: repeatMode.value === "infinite" ? optionalIndex(cooperateRow) : undefined,
+          cooperate_col: repeatMode.value === "infinite" ? optionalIndex(cooperateCol) : undefined,
         }),
       });
       const data = await response.json();
@@ -501,6 +679,12 @@
       showAlert(error.message, "danger");
     }
   });
+  document.querySelectorAll("[data-repeat-mode]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setRepeatMode(button.getAttribute("data-repeat-mode"));
+    });
+  });
+  saveButton.addEventListener("click", saveGame);
   resetButton.addEventListener("click", resetGame);
   document.querySelectorAll("[data-theme-mode]").forEach((button) => {
     button.addEventListener("click", () => {

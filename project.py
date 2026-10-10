@@ -137,17 +137,15 @@ def main(argv=None):
             print(
                 f"   {reduced.player.strategy(0).name} vs {reduced.opponent.strategy(0).name}"
             )
-        return
-
-    if args.zero_sum:
+    elif args.zero_sum:
         _print_williams_mix(reduced)
-        return
-
-    if args.lemke_howson:
+    elif args.lemke_howson:
         _print_lemke_howson_mix(reduced, args.drop_label)
-        return
+    else:
+        _print_support_enumeration_mix(reduced)
 
-    _print_support_enumeration_mix(reduced)
+    if args.repeat:
+        _print_repeated(game, args)
 
 
 def _print_williams_mix(game: Game) -> None:
@@ -226,6 +224,61 @@ def _print_mix(game: Game, player_mix, opponent_mix) -> None:
         )
 
 
+def _print_repeated(game: Game, args) -> None:
+    from repeated import analyze_repeated, parse_cooperate
+
+    print()
+    print("Analysing the repeated game ...")
+    try:
+        result = analyze_repeated(
+            game,
+            args.repeat,
+            periods=args.periods,
+            discount=args.delta,
+            cooperate=parse_cooperate(args.cooperate),
+        )
+    except ValueError as error:
+        print(error)
+        exit(1)
+
+    print(result["message"])
+    if result["mode"] == "finite":
+        print(f"   periods: {result['periods']}")
+        if result.get("path"):
+            first = result["path"][0]
+            print(
+                f"   SPNE path: {first['player']} vs {first['opponent']} "
+                f"in every period"
+            )
+            print(
+                f"   total payoffs: {result['total_payoffs'][0]:g} | "
+                f"{result['total_payoffs'][1]:g}"
+            )
+        elif result.get("last_period"):
+            print("   last-period stage NE:")
+            for item in result["last_period"]:
+                print(f"      {item['player']} vs {item['opponent']}")
+        return
+
+    print(f"   discount δ = {result['discount']:g}")
+    selected = result.get("selected")
+    if not selected:
+        return
+    coop = selected["cooperate"]
+    print(f"   cooperate: {coop['player']} vs {coop['opponent']} {coop['payoffs']}")
+    if selected.get("punishment"):
+        punish = selected["punishment"]
+        label = (
+            f"{punish['player']} vs {punish['opponent']}"
+            if punish.get("player")
+            else "mixed stage NE"
+        )
+        print(f"   punishment: {label} {punish['payoffs']}")
+    if selected.get("critical_delta") is not None:
+        print(f"   critical δ* = {selected['critical_delta']:.4g}")
+    print(f"   sustainable: {selected['sustainable']}")
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Solve payoff matrices")
     parser.add_argument(
@@ -251,6 +304,27 @@ def parse_args(argv=None):
         default=None,
         metavar="K",
         help="Lemke–Howson starting label (default: try every label). Implies --lemke-howson.",
+    )
+    parser.add_argument(
+        "--repeat",
+        choices=["finite", "infinite"],
+        help="analyse the stage game as a finitely or infinitely repeated game",
+    )
+    parser.add_argument(
+        "--periods",
+        type=int,
+        help="number of repetitions for --repeat finite (2-50)",
+    )
+    parser.add_argument(
+        "--delta",
+        type=float,
+        help="discount factor in [0, 1) for --repeat infinite",
+    )
+    parser.add_argument(
+        "--cooperate",
+        type=str,
+        metavar="I,J",
+        help="cooperative cell for grim trigger, as row,column indices (default: best Pareto cell)",
     )
     parser.add_argument(
         "-c",

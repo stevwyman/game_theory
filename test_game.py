@@ -13,6 +13,7 @@ from game import (
     transpose_strategy_set,
 )
 from project import load_game, game_setup
+from repeated import analyze_finite, analyze_infinite, analyze_repeated
 
 
 def test_transpose_strategy():
@@ -428,6 +429,50 @@ def test_load_game_does_not_overlay_default_payoffs(tmp_path):
 def test_load_missing_ini():
     with pytest.raises(FileNotFoundError):
         load_game("games/does_not_exist.ini")
+
+
+def test_finite_pd_unravels_to_defect():
+    game = load_game("games/prisoners_dilemma.ini")
+    result = analyze_finite(game, 5)
+    assert result["unique"] is True
+    assert len(result["path"]) == 5
+    assert all(item["player"] == "P_S1" and item["opponent"] == "O_S1" for item in result["path"])
+    assert result["average_payoffs"] == [-5.0, -5.0]
+    assert result["total_payoffs"] == [-25.0, -25.0]
+
+
+def test_infinite_pd_grim_trigger():
+    game = load_game("games/prisoners_dilemma.ini")
+    sustainable = analyze_infinite(game, 0.6)
+    assert sustainable["selected"]["cooperate"]["player"] == "P_S0"
+    assert sustainable["selected"]["cooperate"]["opponent"] == "O_S0"
+    assert sustainable["selected"]["critical_delta"] == pytest.approx(0.4)
+    assert sustainable["sustainable"] is True
+
+    not_sustainable = analyze_infinite(game, 0.3)
+    assert not_sustainable["selected"]["critical_delta"] == pytest.approx(0.4)
+    assert not_sustainable["sustainable"] is False
+
+    pinned = analyze_infinite(game, 0.6, cooperate=(0, 0))
+    assert pinned["selected"]["critical_delta"] == pytest.approx(0.4)
+
+
+def test_repeated_rejects_bad_inputs():
+    game = load_game("games/prisoners_dilemma.ini")
+    with pytest.raises(ValueError, match="discount"):
+        analyze_repeated(game, "infinite", discount=1)
+    with pytest.raises(ValueError, match="periods"):
+        analyze_repeated(game, "finite", periods=51)
+    with pytest.raises(ValueError, match="outside"):
+        analyze_repeated(game, "infinite", discount=0.5, cooperate=(4, 0))
+
+
+def test_finite_battle_of_the_sexes_reports_last_period_set():
+    game = load_game("games/battle_of_the_sexes.ini")
+    result = analyze_finite(game, 3)
+    assert result["unique"] is False
+    names = {(item["player"], item["opponent"]) for item in result["last_period"]}
+    assert len(names) >= 2
 
 
 def test_game_setup_reads_c_flag():

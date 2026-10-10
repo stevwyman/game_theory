@@ -3,32 +3,33 @@
 from __future__ import annotations
 
 import math
-import os
 from typing import Any
 
 from game import Game, Opponent, Player
-from project import load_game
+from repeated import analyze_repeated
+from webapp import store
 
 MAX_STRATEGIES = 8
 MAX_NAME_LENGTH = 40
 ALLOWED_METHODS = ("support", "lemke-howson", "williams")
-GAMES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "games"))
+ALLOWED_REPEAT = ("off", "finite", "infinite")
 
 
 def list_examples() -> list[dict[str, str]]:
-    examples = []
-    for filename in sorted(os.listdir(GAMES_DIR)):
-        if not filename.endswith(".ini"):
-            continue
-        stem = filename[:-4]
-        examples.append({"id": stem, "label": stem.replace("_", " ")})
-    return examples
+    return store.list_games()
 
 
 def load_example(example_id: str) -> dict[str, Any]:
-    path = _example_path(example_id)
-    game = load_game(path)
-    return serialize_game(game)
+    return store.get_game(example_id)
+
+
+def save_example(payload: dict[str, Any]) -> dict[str, Any]:
+    game = game_from_payload(payload)
+    record = serialize_game(game)
+    record["id"] = payload.get("id")
+    record["label"] = payload.get("label")
+    record["description"] = payload.get("description", "")
+    return store.upsert_game(record)
 
 
 def analyze(payload: dict[str, Any]) -> dict[str, Any]:
@@ -65,6 +66,7 @@ def analyze(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
     result["mixed"] = _mixed_result(reduced, method)
+    result["repeated"] = _repeated_result(game, payload)
     return result
 
 
@@ -117,6 +119,60 @@ def serialize_game(game: Game) -> dict[str, Any]:
         ],
         "cells": cells,
     }
+
+
+def _repeated_result(game: Game, payload: dict[str, Any]) -> dict[str, Any]:
+    mode = str(payload.get("repeat") or "off")
+    if mode not in ALLOWED_REPEAT:
+        raise ValueError("repeat must be off, finite, or infinite")
+    if mode == "off":
+        return {"mode": "off"}
+    return analyze_repeated(
+        game,
+        mode,
+        periods=_optional_int(payload.get("periods"), "periods"),
+        discount=_optional_number(payload.get("discount"), "discount"),
+        cooperate=_cooperate_from_payload(payload),
+    )
+
+
+def _cooperate_from_payload(payload: dict[str, Any]) -> tuple[int, int] | None:
+    row = payload.get("cooperate_row")
+    col = payload.get("cooperate_col")
+    if row is None and col is None:
+        return None
+    if row is None or col is None:
+        raise ValueError("cooperate_row and cooperate_col must be provided together")
+    return (
+        _require_int(row, "cooperate_row"),
+        _require_int(col, "cooperate_col"),
+    )
+
+
+def _optional_int(value: Any, field: str) -> int | None:
+    if value is None or value == "":
+        return None
+    return _require_int(value, field)
+
+
+def _optional_number(value: Any, field: str) -> float | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{field} must be a number")
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError(f"{field} must be a finite number")
+    return number
+
+
+def _require_int(value: Any, field: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{field} must be an integer")
+    number = int(value)
+    if number != value:
+        raise ValueError(f"{field} must be an integer")
+    return number
 
 
 def _pure_ne_grid(game: Game) -> dict[str, Any]:
@@ -242,16 +298,6 @@ def _mix_payload(game: Game, player_mix, opponent_mix) -> dict[str, Any]:
             for j, probability in enumerate(opponent_mix)
         ],
     }
-
-
-def _example_path(example_id: str) -> str:
-    if not example_id or "/" in example_id or "\\" in example_id or ".." in example_id:
-        raise ValueError("unknown example")
-    filename = f"{example_id}.ini"
-    path = os.path.abspath(os.path.join(GAMES_DIR, filename))
-    if not path.startswith(GAMES_DIR + os.sep) or not os.path.isfile(path):
-        raise ValueError("unknown example")
-    return path
 
 
 def _clean_name(value: Any, fallback: str) -> str:

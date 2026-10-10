@@ -49,11 +49,14 @@ python project.py -c games/tennis.ini
 python project.py -c games/prisoners_dilemma.ini --use_weakly
 python project.py -c games/rock_paper_scissors.ini --zero-sum
 python project.py -c games/battle_of_the_sexes.ini --lemke-howson
+python project.py -c games/prisoners_dilemma.ini --repeat finite --periods 5
+python project.py -c games/prisoners_dilemma.ini --repeat infinite --delta 0.6
 ```
 
 ```
 usage: project.py [-h] [--use_weakly] [--zero-sum] [--lemke-howson]
-                  [--drop-label K] [-c C]
+                  [--drop-label K] [--repeat {finite,infinite}]
+                  [--periods T] [--delta D] [--cooperate I,J] [-c C]
 
 Solve payoff matrices
 
@@ -65,6 +68,10 @@ optional arguments:
                    (zero-sum / constant-sum games)
   --lemke-howson   find Nash equilibria with Lemke–Howson complementary pivoting
   --drop-label K   Lemke–Howson starting label (implies --lemke-howson)
+  --repeat MODE    finite unraveling or infinite grim trigger
+  --periods T      repetitions for --repeat finite (2-50)
+  --delta D        discount in [0, 1) for --repeat infinite
+  --cooperate I,J  grim-trigger cell (default: best Pareto-improving cell)
   -c C             path to the *.ini file holding the payoffs
                    (default: games/default.ini)
 ```
@@ -82,13 +89,15 @@ uvicorn webapp.app:app --host 127.0.0.1 --port 8080
 
 `python -m webapp` starts the same uvicorn process. Open http://127.0.0.1:8080.
 
-The container image also runs uvicorn on port 8080 as a non-root user, with a read-only root filesystem:
+The container is built from Red Hat UBI 9 Python 3.12 (`registry.access.redhat.com/ubi9/python-312`). It runs uvicorn as the image's non-root user (UID 1001), with a read-only root filesystem:
 
 ```sh
 docker compose up --build
 ```
 
-The home page lets you load any `games/*.ini` example, edit the bimatrix, choose support enumeration, Lemke–Howson, or Williams, and run iterated deletion. Solve requests are validated (finite numbers, at most 8×8). OpenAPI docs are disabled.
+The home page loads games from a local SQLite database (`data/games.db`). Lecture INI files are imported once as seed data. You can add a title and explanation, then save a new or edited matrix. The container stores that database on a named volume. The CLI still accepts `*.ini` files via `-c`.
+
+Choose support enumeration, Lemke–Howson, or Williams, and run iterated deletion. It can also treat the matrix as a finitely repeated game (unraveling) or an infinitely repeated discounted grim trigger. Solve requests are validated (finite numbers, at most 8×8, at most 50 periods, discount in `[0, 1)`). OpenAPI docs are disabled.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -100,8 +109,9 @@ Python files:
 2. `game.py` — game / player / strategy types and solvers
 3. `lemke_howson.py` — complementary pivoting (Lemke–Howson 1964)
 4. `williams.py` — fictitious play for zero-sum games
-5. `webapp/` — PatternFly UI and JSON API
-6. `test_game.py` / `test_webapp.py` — pytest suite
+5. `repeated.py` — finite unraveling and infinite grim trigger
+6. `webapp/` — PatternFly UI, JSON API, and SQLite game store
+7. `test_game.py` / `test_webapp.py` — pytest suite
 
 A game:
 

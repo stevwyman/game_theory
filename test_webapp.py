@@ -3,8 +3,15 @@ from fastapi.testclient import TestClient
 
 from webapp.app import app
 from webapp.service import analyze, game_from_payload
+from webapp.store import init_store
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def isolated_db(tmp_path, monkeypatch):
+    monkeypatch.setenv("GAME_DB_PATH", str(tmp_path / "games.db"))
+    init_store()
 
 
 def test_health():
@@ -19,9 +26,13 @@ def test_index_renders_patternfly():
     response = client.get("/")
     assert response.status_code == 200
     assert "Game theory solver" in response.text
+    assert "logo.svg" in response.text
     assert "patternfly.min.css" in response.text
     assert "theme.js" in response.text
     assert "Reset" in response.text
+    assert "Save game" in response.text
+    assert "Explanation" in response.text
+    assert 'data-repeat-mode="finite"' in response.text
     assert 'data-theme-mode="auto"' in response.text
     assert "tennis" in response.text
 
@@ -32,6 +43,7 @@ def test_example_tennis():
     data = response.json()
     assert data["player_name"] == "Venus"
     assert data["cells"][0][0] == [50.0, 50.0]
+    assert "lecture 9" in data["description"]
 
 
 def test_example_rejects_path_traversal():
@@ -105,6 +117,99 @@ def test_game_from_cells_matches_ini_layout():
         "opponent_br": True,
         "pure_ne": True,
     }
+    assert result["repeated"] == {"mode": "off"}
+
+
+def test_solve_repeated_pd_finite():
+    payload = {
+        "cells": [[[-2, -2], [-10, 0]], [[0, -10], [-5, -5]]],
+        "repeat": "finite",
+        "periods": 4,
+    }
+    response = client.post("/api/solve", json=payload)
+    assert response.status_code == 200
+    repeated = response.json()["repeated"]
+    assert repeated["mode"] == "finite"
+    assert repeated["unique"] is True
+    assert len(repeated["path"]) == 4
+    assert repeated["path"][0]["player"] == "P_S1"
+
+
+def test_solve_repeated_pd_infinite():
+    payload = {
+        "cells": [[[-2, -2], [-10, 0]], [[0, -10], [-5, -5]]],
+        "repeat": "infinite",
+        "discount": 0.6,
+        "cooperate_row": 0,
+        "cooperate_col": 0,
+    }
+    response = client.post("/api/solve", json=payload)
+    assert response.status_code == 200
+    repeated = response.json()["repeated"]
+    assert repeated["sustainable"] is True
+    assert repeated["critical_delta"] == pytest.approx(0.4)
+
+
+def test_solve_repeated_rejects_bad_discount_and_periods():
+    cells = [[[-2, -2], [-10, 0]], [[0, -10], [-5, -5]]]
+    assert client.post(
+        "/api/solve",
+        json={"cells": cells, "repeat": "infinite", "discount": 1},
+    ).status_code == 400
+    assert client.post(
+        "/api/solve",
+        json={"cells": cells, "repeat": "finite", "periods": 80},
+    ).status_code == 400
+    assert client.post(
+        "/api/solve",
+        json={
+            "cells": cells,
+            "repeat": "infinite",
+            "discount": 0.5,
+            "cooperate_row": 9,
+            "cooperate_col": 0,
+        },
+    ).status_code == 400
+
+
+def test_save_and_reload_game():
+    payload = {
+        "label": "My coordination game",
+        "description": "Both players want to match.",
+        "player_name": "Ann",
+        "opponent_name": "Bob",
+        "player_strategies": ["Left", "Right"],
+        "opponent_strategies": ["Left", "Right"],
+        "cells": [[[2, 1], [0, 0]], [[0, 0], [1, 2]]],
+    }
+    created = client.post("/api/games", json=payload)
+    assert created.status_code == 200
+    data = created.json()
+    assert data["id"] == "my-coordination-game"
+    assert data["description"] == "Both players want to match."
+    assert data["player_strategies"] == ["Left", "Right"]
+    assert data["cells"][0][0] == [2.0, 1.0]
+
+    listed = client.get("/api/examples").json()["examples"]
+    assert any(item["id"] == "my-coordination-game" for item in listed)
+
+    loaded = client.get("/api/examples/my-coordination-game")
+    assert loaded.status_code == 200
+    assert loaded.json()["opponent_name"] == "Bob"
+
+    payload["id"] = "my-coordination-game"
+    payload["description"] = "Updated notes."
+    updated = client.post("/api/games", json=payload)
+    assert updated.status_code == 200
+    assert updated.json()["description"] == "Updated notes."
+
+
+def test_save_game_requires_label():
+    response = client.post(
+        "/api/games",
+        json={"cells": [[[1, 0], [0, 1]], [[0, 1], [1, 0]]]},
+    )
+    assert response.status_code == 400
 
 
 def test_module_starts_uvicorn(monkeypatch):
