@@ -8,12 +8,12 @@ services:
     tmpfs:
       - /tmp
     volumes:
-      - game-data:/opt/app-root/src/data
+      - game-data:/data
     security_opt:
       - no-new-privileges:true
     environment:
       PYTHONUNBUFFERED: "1"
-      GAME_DB_PATH: /opt/app-root/src/data/games.db
+      GAME_DB_PATH: /data/games.db
 
 volumes:
   game-data:

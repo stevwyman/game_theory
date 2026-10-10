@@ -89,7 +89,7 @@ uvicorn webapp.app:app --host 127.0.0.1 --port 8080
 
 `python -m webapp` starts the same uvicorn process. Open http://127.0.0.1:8080.
 
-The container is built from Red Hat UBI 9 Python 3.12 (`registry.access.redhat.com/ubi9/python-312`). It runs uvicorn as the image's non-root user (UID 1001), with a read-only root filesystem:
+The container is a two-stage image: dependencies are built in `registry.access.redhat.com/hi/python:latest-builder`, then copied into the slimmer `registry.access.redhat.com/hi/python:latest` runtime. It runs uvicorn as UID 1001, with a read-only root filesystem:
 
 ```sh
 docker compose up --build
