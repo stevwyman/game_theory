@@ -15,6 +15,7 @@ services:
     environment:
       PYTHONUNBUFFERED: "1"
       GAME_DB_PATH: /data/games.db
+      ROOT_PATH: ${ROOT_PATH:-/game-theory}
 
 volumes:
   game-data:

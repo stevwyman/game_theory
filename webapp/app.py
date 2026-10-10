@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -11,6 +12,18 @@ from webapp.service import analyze, list_examples, load_example, save_example
 from webapp.store import init_store
 
 BASE_DIR = Path(__file__).resolve().parent
+
+
+def configured_root_path() -> str:
+    raw = os.environ.get("ROOT_PATH", "").strip().rstrip("/")
+    if not raw or raw == "/":
+        return ""
+    if not raw.startswith("/"):
+        raw = f"/{raw}"
+    parts = [part for part in raw.split("/") if part != ""]
+    if not parts or any(part in {".", ".."} for part in parts):
+        return ""
+    return "/" + "/".join(parts)
 
 
 @asynccontextmanager
@@ -52,7 +65,26 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class RootPathMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in {"http", "websocket"}:
+            prefix = configured_root_path()
+            path = scope.get("path", "")
+            if prefix and (path == prefix or path.startswith(f"{prefix}/")):
+                scope = dict(scope)
+                remainder = path[len(prefix) :] or "/"
+                scope["path"] = remainder
+                raw_path = scope.get("raw_path")
+                if isinstance(raw_path, (bytes, bytearray)):
+                    scope["raw_path"] = remainder.encode("ascii")
+        await self.app(scope, receive, send)
+
+
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RootPathMiddleware)
 
 
 @app.get("/health")
@@ -65,7 +97,7 @@ def index(request: Request):
     return templates.TemplateResponse(
         request,
         "index.html",
-        {"examples": list_examples()},
+        {"examples": list_examples(), "root_path": configured_root_path()},
     )
 
 

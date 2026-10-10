@@ -1,4 +1,5 @@
 (() => {
+  const APP_ROOT = (document.documentElement.dataset.appRoot || "").replace(/\/$/, "");
   const form = document.getElementById("game-form");
   const exampleSelect = document.getElementById("example");
   const gameLabel = document.getElementById("game-label");
@@ -574,7 +575,7 @@
   }
 
   async function refreshExamples(selectedId) {
-    const response = await fetch("/api/examples");
+    const response = await fetch(`${APP_ROOT}/api/examples`);
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.detail || "Could not list games");
@@ -590,7 +591,7 @@
     }
     saveButton.disabled = true;
     try {
-      const response = await fetch("/api/games", {
+      const response = await fetch(`${APP_ROOT}/api/games`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(currentGamePayload()),
@@ -613,7 +614,7 @@
     if (!exampleId) {
       return;
     }
-    const response = await fetch(`/api/examples/${encodeURIComponent(exampleId)}`);
+    const response = await fetch(`${APP_ROOT}/api/examples/${encodeURIComponent(exampleId)}`);
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.detail || "Could not load example");
@@ -627,7 +628,7 @@
     readEditor();
     solveButton.disabled = true;
     try {
-      const response = await fetch("/api/solve", {
+      const response = await fetch(`${APP_ROOT}/api/solve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

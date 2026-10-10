@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en-US" data-app-root="{{ root_path }}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Game theory solver</title>
-    <link rel="icon" href="/static/logo.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/vendor/patternfly.min.css" />
-    <link rel="stylesheet" href="/static/app.css" />
-    <script src="/static/theme.js"></script>
+    <link rel="icon" href="{{ root_path }}/static/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="{{ root_path }}/static/vendor/patternfly.min.css" />
+    <link rel="stylesheet" href="{{ root_path }}/static/app.css" />
+    <script src="{{ root_path }}/static/theme.js"></script>
   </head>
   <body>
     <div class="pf-v5-c-page" id="page">
@@ -15,7 +15,7 @@
       <header class="pf-v5-c-masthead" id="page-masthead">
         <div class="pf-v5-c-masthead__main">
           <div class="pf-v5-c-masthead__brand app-brand">
-            <img class="app-logo" src="/static/logo.svg" width="40" height="40" alt="" />
+            <img class="app-logo" src="{{ root_path }}/static/logo.svg" width="40" height="40" alt="" />
             <p class="pf-v5-c-title pf-m-lg">Game theory solver</p>
           </div>
         </div>
@@ -306,6 +306,6 @@
         </section>
       </main>
     </div>
-    <script src="/static/app.js"></script>
+    <script src="{{ root_path }}/static/app.js"></script>
   </body>
 </html>

@@ -99,7 +99,19 @@ podman push stevwyman/game-theory-solver:latest
 podman compose -f container-compose.yaml up
 ```
 
-Override the image with `GAME_SOLVER_IMAGE=quay.io/you/game-theory-solver:1.0` if you use another registry. The app is on http://localhost:8086.
+Override the image with `GAME_SOLVER_IMAGE=quay.io/you/game-theory-solver:1.0` if you use another registry. The app is on http://localhost:8086/game-theory/. Set `ROOT_PATH=` (empty) to serve it at `/` instead.
+
+### Plesk Docker proxy
+
+Plesk Docker proxy rules map a public path to the container port. The app reads `ROOT_PATH` (default `/game-theory` in `container-compose.yaml`) and prefixes every page, static file, and API URL with it. That works whether Plesk keeps `/game-theory` on the upstream request or strips it.
+
+1. Run the container so port 8080 is reachable from Plesk (compose publishes `8086:8080`).
+2. In Plesk: **Docker** → the container → **Proxy rules** → **Add rule**.
+3. Domain: `domain.com`. URL / path: `/game-theory`. Container port: `8080`.
+4. Confirm the container environment has `ROOT_PATH=/game-theory` (the compose file sets this).
+5. Open `https://domain.com/game-theory/`.
+
+If you want a different subpath, set `ROOT_PATH=/your-path` to match the Plesk rule. Use a leading slash and no trailing slash. Local uvicorn without `ROOT_PATH` still serves http://127.0.0.1:8080/.
 
 The home page loads games from a local SQLite database (`data/games.db`). Lecture INI files are imported once as seed data. You can add a title and explanation, then save a new or edited matrix. The container stores that database on a named volume. The CLI still accepts `*.ini` files via `-c`.
 

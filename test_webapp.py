@@ -26,6 +26,8 @@ def test_index_renders_patternfly():
     response = client.get("/")
     assert response.status_code == 200
     assert "Game theory solver" in response.text
+    assert 'data-app-root=""' in response.text
+    assert 'href="/static/app.css"' in response.text
     assert "logo.svg" in response.text
     assert "patternfly.min.css" in response.text
     assert "theme.js" in response.text
@@ -35,6 +37,36 @@ def test_index_renders_patternfly():
     assert 'data-repeat-mode="finite"' in response.text
     assert 'data-theme-mode="auto"' in response.text
     assert "tennis" in response.text
+
+
+def test_root_path_prefix(monkeypatch):
+    monkeypatch.setenv("ROOT_PATH", "/game-theory")
+    prefixed = TestClient(app)
+    page = prefixed.get("/game-theory/")
+    assert page.status_code == 200
+    assert 'data-app-root="/game-theory"' in page.text
+    assert 'href="/game-theory/static/app.css"' in page.text
+    assert prefixed.get("/game-theory/health").json() == {"status": "ok"}
+    assert prefixed.get("/health").json() == {"status": "ok"}
+    assert prefixed.get("/game-theory/api/examples").status_code == 200
+    assert prefixed.get("/game-theory/static/app.js").status_code == 200
+    assert prefixed.get("/static/app.js").status_code == 200
+    stripped = prefixed.get("/")
+    assert stripped.status_code == 200
+    assert 'data-app-root="/game-theory"' in stripped.text
+
+
+def test_root_path_normalizes_and_rejects_traversal(monkeypatch):
+    from webapp.app import configured_root_path
+
+    monkeypatch.setenv("ROOT_PATH", "game-theory")
+    assert configured_root_path() == "/game-theory"
+    monkeypatch.setenv("ROOT_PATH", "/game-theory/")
+    assert configured_root_path() == "/game-theory"
+    monkeypatch.setenv("ROOT_PATH", "/game-theory/../secret")
+    assert configured_root_path() == ""
+    monkeypatch.delenv("ROOT_PATH", raising=False)
+    assert configured_root_path() == ""
 
 
 def test_example_tennis():
