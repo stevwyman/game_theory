@@ -1,14 +1,15 @@
 services:
   web:
-    build: .
-    command: ["uvicorn", "webapp.app:app", "--host", "0.0.0.0", "--port", "8080"]
+    image: ${GAME_SOLVER_IMAGE:-stevwyman/game-theory-solver:latest}
+    container_name: game-theory-solver
+    restart: unless-stopped
     ports:
       - "8086:8080"
     read_only: true
     tmpfs:
       - /tmp
     volumes:
-      - game-data:/data
+      - game-data:/data:z
     security_opt:
       - no-new-privileges:true
     environment:

@@ -89,11 +89,17 @@ uvicorn webapp.app:app --host 127.0.0.1 --port 8080
 
 `python -m webapp` starts the same uvicorn process. Open http://127.0.0.1:8080.
 
-The container is a two-stage image: dependencies are built in `registry.access.redhat.com/hi/python:latest-builder`, then copied into the slimmer `registry.access.redhat.com/hi/python:latest` runtime. It runs uvicorn as UID 1001, with a read-only root filesystem:
+The container is a two-stage image: dependencies are built in `registry.access.redhat.com/hi/python:latest-builder`, then copied into the slimmer `registry.access.redhat.com/hi/python:latest` runtime. It runs uvicorn as UID 1001, with a read-only root filesystem.
+
+Build locally, push, then run the published image (no compose build):
 
 ```sh
-docker compose up --build
+podman build -t stevwyman/game-theory-solver:latest .
+podman push stevwyman/game-theory-solver:latest
+podman compose -f container-compose.yaml up
 ```
+
+Override the image with `GAME_SOLVER_IMAGE=quay.io/you/game-theory-solver:1.0` if you use another registry. The app is on http://localhost:8086.
 
 The home page loads games from a local SQLite database (`data/games.db`). Lecture INI files are imported once as seed data. You can add a title and explanation, then save a new or edited matrix. The container stores that database on a named volume. The CLI still accepts `*.ini` files via `-c`.
 
