@@ -1,39 +1,62 @@
-(() => {
-  const KEY = "game-solver-theme";
-  const media = window.matchMedia("(prefers-color-scheme: dark)");
+(function () {
+  var storageKey = "theme";
 
-  function getMode() {
-    const stored = window.localStorage.getItem(KEY);
-    return stored === "light" || stored === "dark" || stored === "auto" ? stored : "auto";
+  function preferred() {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   }
 
-  function resolved(mode) {
-    if (mode === "dark") {
-      return "dark";
+  function storedChoice() {
+    try {
+      return localStorage.getItem(storageKey) || "auto";
+    } catch (error) {
+      return "auto";
     }
-    if (mode === "light") {
-      return "light";
-    }
-    return media.matches ? "dark" : "light";
   }
 
-  function apply(mode) {
-    const next = mode === "light" || mode === "dark" || mode === "auto" ? mode : "auto";
-    window.localStorage.setItem(KEY, next);
-    document.documentElement.classList.toggle("pf-v5-theme-dark", resolved(next) === "dark");
-    document.documentElement.dataset.themeMode = next;
-    document.querySelectorAll("[data-theme-mode]").forEach((button) => {
-      const selected = button.getAttribute("data-theme-mode") === next;
-      button.classList.toggle("pf-m-selected", selected);
-      button.setAttribute("aria-pressed", selected ? "true" : "false");
+  function apply(choice) {
+    var resolved = choice === "auto" ? preferred() : choice;
+    document.documentElement.setAttribute("data-bs-theme", resolved);
+    document.documentElement.setAttribute("data-sw-theme", choice);
+  }
+
+  function remember(choice) {
+    try {
+      localStorage.setItem(storageKey, choice);
+    } catch (error) {
+      /* Private mode can block storage; the choice still applies for this page. */
+    }
+    apply(choice);
+  }
+
+  function markActive(choice) {
+    document.querySelectorAll("[data-sw-theme-value]").forEach(function (item) {
+      var selected = item.getAttribute("data-sw-theme-value") === choice;
+      item.classList.toggle("active", selected);
+      item.setAttribute("aria-pressed", selected ? "true" : "false");
     });
+    var label = document.getElementById("theme-menu-label");
+    if (label) {
+      label.textContent = choice.charAt(0).toUpperCase() + choice.slice(1);
+    }
   }
 
-  window.GameTheme = { apply, getMode, resolved };
-  apply(getMode());
-  media.addEventListener("change", () => {
-    if (getMode() === "auto") {
+  apply(storedChoice());
+
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
+    if (storedChoice() === "auto") {
       apply("auto");
     }
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var choice = document.documentElement.getAttribute("data-sw-theme") || storedChoice();
+    markActive(choice);
+    document.querySelectorAll("[data-sw-theme-value]").forEach(function (item) {
+      item.addEventListener("click", function () {
+        var next = item.getAttribute("data-sw-theme-value");
+        remember(next);
+        markActive(next);
+      });
+    });
   });
 })();

@@ -1,11 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-hidden="true">
-  <rect width="64" height="64" rx="14" fill="#F2CEAE"/>
-  <rect x="18" y="18" width="18" height="18" rx="3" fill="#0367A6"/>
-  <rect x="38" y="18" width="18" height="18" rx="3" fill="#0378A6"/>
-  <rect x="18" y="38" width="18" height="18" rx="3" fill="#049DBF"/>
-  <rect x="38" y="38" width="18" height="18" rx="3" fill="#F2A057"/>
-  <circle cx="10" cy="27" r="4" fill="#0367A6"/>
-  <circle cx="10" cy="47" r="4" fill="#049DBF"/>
-  <circle cx="27" cy="10" r="4" fill="#0378A6"/>
-  <circle cx="47" cy="10" r="4" fill="#F2A057"/>
+  <style>
+    .plate { fill: none; stroke: #0367a6; stroke-width: 3; }
+    .navy { fill: #0367a6; }
+    .mid { fill: #0378a6; }
+    .cyan { fill: #049dbf; }
+    .orange { fill: #f2a057; }
+    @media (prefers-color-scheme: dark) {
+      .plate { stroke: #f2ceae; }
+      .navy,
+      .mid { fill: #f2ceae; }
+    }
+  </style>
+  <rect class="plate" x="3.5" y="3.5" width="57" height="57" rx="14" />
+  <rect class="navy" x="18" y="18" width="16" height="16" rx="3" />
+  <rect class="mid" x="38" y="18" width="16" height="16" rx="3" />
+  <rect class="cyan" x="18" y="38" width="16" height="16" rx="3" />
+  <rect class="orange" x="38" y="38" width="16" height="16" rx="3" />
+  <circle class="navy" cx="11" cy="26" r="3.5" />
+  <circle class="cyan" cx="11" cy="46" r="3.5" />
+  <circle class="mid" cx="26" cy="11" r="3.5" />
+  <circle class="orange" cx="46" cy="11" r="3.5" />
 </svg>

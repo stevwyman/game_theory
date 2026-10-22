@@ -5,307 +5,187 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Game theory solver</title>
     <link rel="icon" href="{{ root_path }}/static/logo.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="{{ root_path }}/static/vendor/patternfly.min.css" />
-    <link rel="stylesheet" href="{{ root_path }}/static/app.css" />
     <script src="{{ root_path }}/static/theme.js"></script>
+    <link rel="stylesheet" href="{{ root_path }}/static/vendor/bootstrap.min.css" />
+    <link rel="stylesheet" href="{{ root_path }}/static/app.css" />
   </head>
-  <body>
-    <div class="pf-v5-c-page" id="page">
-      <a class="pf-v5-c-skip-to-content pf-v5-c-button pf-m-primary" href="#main">Skip to content</a>
-      <header class="pf-v5-c-masthead" id="page-masthead">
-        <div class="pf-v5-c-masthead__main">
-          <div class="pf-v5-c-masthead__brand app-brand">
-            <img class="app-logo" src="{{ root_path }}/static/logo.svg" width="40" height="40" alt="" />
-            <p class="pf-v5-c-title pf-m-lg">Game theory solver</p>
-          </div>
+  <body class="d-flex flex-column min-vh-100">
+    <a class="visually-hidden-focusable btn btn-primary position-absolute m-2" href="#main">Skip to content</a>
+    <nav class="navbar navbar-expand-lg sw-navbar">
+      <div class="container">
+        <a href="{{ root_path }}/" class="navbar-brand" aria-label="Game theory solver">
+          <svg class="app-logo" viewBox="0 0 64 64" width="36" height="36" aria-hidden="true" focusable="false">
+            <rect class="logo-plate" x="3.5" y="3.5" width="57" height="57" rx="14" />
+            <rect class="logo-navy" x="18" y="18" width="16" height="16" rx="3" />
+            <rect class="logo-mid" x="38" y="18" width="16" height="16" rx="3" />
+            <rect class="logo-cyan" x="18" y="38" width="16" height="16" rx="3" />
+            <rect class="logo-orange" x="38" y="38" width="16" height="16" rx="3" />
+            <circle class="logo-navy" cx="11" cy="26" r="3.5" />
+            <circle class="logo-cyan" cx="11" cy="46" r="3.5" />
+            <circle class="logo-mid" cx="26" cy="11" r="3.5" />
+            <circle class="logo-orange" cx="46" cy="11" r="3.5" />
+          </svg>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#site-nav" aria-controls="site-nav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="site-nav">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="{{ root_path }}/">Solver</a>
+            </li>
+          </ul>
+          <ul class="navbar-nav">
+            <li class="nav-item dropdown">
+              <button class="nav-link dropdown-toggle" id="theme-menu" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span id="theme-menu-label">Auto</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="theme-menu">
+                <li><button type="button" class="dropdown-item" data-sw-theme-value="light" aria-pressed="false">Light</button></li>
+                <li><button type="button" class="dropdown-item" data-sw-theme-value="dark" aria-pressed="false">Dark</button></li>
+                <li><button type="button" class="dropdown-item" data-sw-theme-value="auto" aria-pressed="false">Auto</button></li>
+              </ul>
+            </li>
+          </ul>
         </div>
-        <div class="pf-v5-c-masthead__content app-masthead-content">
-          <p class="pf-v5-c-content app-subtitle">Two-player normal-form payoff matrices</p>
-          <div class="pf-v5-c-toggle-group app-theme-switch" role="group" aria-label="Color theme">
-            <div class="pf-v5-c-toggle-group__item">
-              <button class="pf-v5-c-toggle-group__button" type="button" data-theme-mode="light" aria-pressed="false">Light</button>
-            </div>
-            <div class="pf-v5-c-toggle-group__item">
-              <button class="pf-v5-c-toggle-group__button" type="button" data-theme-mode="auto" aria-pressed="true">Auto</button>
-            </div>
-            <div class="pf-v5-c-toggle-group__item">
-              <button class="pf-v5-c-toggle-group__button" type="button" data-theme-mode="dark" aria-pressed="false">Dark</button>
-            </div>
-          </div>
-        </div>
-      </header>
-      <main class="pf-v5-c-page__main" id="main" tabindex="-1">
-        <section class="pf-v5-c-page__main-section pf-m-limit-width">
-          <div class="pf-v5-c-page__main-body">
-            <div class="pf-v5-l-stack pf-m-gutter">
-              <div class="pf-v5-l-stack__item">
-                <div id="alert-region"></div>
+      </div>
+    </nav>
+
+    <main class="flex-grow-1" id="main" tabindex="-1">
+      <div class="container py-4">
+        <header class="mb-4">
+          <h1 class="mb-1">Game theory solver</h1>
+          <p class="fs-4 sw-muted mb-0">Two-player normal-form payoff matrices</p>
+        </header>
+        <div id="alert-region" class="mb-3"></div>
+        <div class="row g-4 align-items-start">
+          <div class="col-lg-6">
+            <div class="card">
+              <div class="card-body">
+                <h2 class="h4 card-title">Game</h2>
+                <form id="game-form" novalidate>
+                  <div class="mb-3">
+                    <label class="form-label" for="example">Example</label>
+                    <select class="form-select" id="example">
+                      <option value="">Custom matrix</option>
+                      {% for example in examples %}
+                      <option value="{{ example.id }}">{{ example.label }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" for="game-label">Title</label>
+                    <input class="form-control" id="game-label" type="text" maxlength="80" placeholder="Name this game to save it" />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" for="game-description">Explanation</label>
+                    <textarea class="form-control" id="game-description" rows="4" maxlength="4000" placeholder="Optional lecture notes or story for this game"></textarea>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-6">
+                      <label class="form-label" for="player-name">Row player</label>
+                      <input class="form-control app-compact-field" id="player-name" type="text" maxlength="40" value="P" />
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label" for="opponent-name">Column player</label>
+                      <input class="form-control app-compact-field" id="opponent-name" type="text" maxlength="40" value="O" />
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label" for="row-count">Row strategies</label>
+                      <input class="form-control app-compact-field" id="row-count" type="number" min="1" max="8" value="2" />
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label" for="col-count">Column strategies</label>
+                      <input class="form-control app-compact-field" id="col-count" type="number" min="1" max="8" value="2" />
+                    </div>
+                  </div>
+                  <div class="mt-3 mb-3">
+                    <span class="form-label">Payoff matrix</span>
+                    <p class="form-text mt-0">Each cell is (row payoff | column payoff).</p>
+                    <div id="matrix-editor" class="app-matrix"></div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" for="mixed-method">Mixed-strategy method</label>
+                    <select class="form-select" id="mixed-method">
+                      <option value="support">Support enumeration</option>
+                      <option value="lemke-howson">Lemke–Howson</option>
+                      <option value="williams">Williams (constant-sum)</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <span class="form-label">Repeated game</span>
+                    <div class="btn-group d-flex flex-wrap" role="group" aria-label="Repeated game">
+                      <button class="btn btn-outline-secondary active" type="button" data-repeat-mode="off" aria-pressed="true">One-shot</button>
+                      <button class="btn btn-outline-secondary" type="button" data-repeat-mode="finite" aria-pressed="false">Finite</button>
+                      <button class="btn btn-outline-secondary" type="button" data-repeat-mode="infinite" aria-pressed="false">Infinite</button>
+                    </div>
+                    <input type="hidden" id="repeat-mode" value="off" />
+                  </div>
+                  <div class="mb-3" id="repeat-finite-fields" hidden>
+                    <label class="form-label" for="periods">Periods</label>
+                    <input class="form-control app-compact-field" id="periods" type="number" min="2" max="50" value="2" />
+                    <div class="form-text">Finite unraveling, 2 to 50 periods.</div>
+                  </div>
+                  <div class="mb-3" id="repeat-infinite-fields" hidden>
+                    <div class="row g-3">
+                      <div class="col-4">
+                        <label class="form-label" for="discount">Discount δ</label>
+                        <input class="form-control" id="discount" type="number" min="0" max="0.999" step="0.05" value="0.6" />
+                      </div>
+                      <div class="col-4">
+                        <label class="form-label" for="cooperate-row">Cooperate row</label>
+                        <input class="form-control" id="cooperate-row" type="number" min="0" max="7" placeholder="auto" />
+                      </div>
+                      <div class="col-4">
+                        <label class="form-label" for="cooperate-col">Cooperate column</label>
+                        <input class="form-control" id="cooperate-col" type="number" min="0" max="7" placeholder="auto" />
+                      </div>
+                    </div>
+                    <div class="form-text">Leave cooperate cells empty to pick the best Pareto-improving cell.</div>
+                  </div>
+                  <div class="mb-3">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="use-weakly" />
+                      <label class="form-check-label" for="use-weakly">Also delete weakly dominated strategies</label>
+                    </div>
+                    <div class="form-text">Weak deletion can drop some Nash equilibria.</div>
+                  </div>
+                  <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-primary" type="submit" id="solve-button">Solve</button>
+                    <button class="btn btn-outline-secondary" type="button" id="save-button">Save game</button>
+                    <button class="btn btn-outline-secondary" type="button" id="reset-button">Reset</button>
+                  </div>
+                </form>
               </div>
-              <div class="pf-v5-l-stack__item">
-                <div class="pf-v5-l-grid pf-m-gutter app-workspace">
-                  <div class="pf-v5-l-grid__item pf-m-12-col pf-m-6-col-on-lg">
-                    <div class="pf-v5-c-card">
-                      <div class="pf-v5-c-card__header">
-                        <div class="pf-v5-c-card__title">
-                          <h1 class="pf-v5-c-card__title-text">Game</h1>
-                        </div>
-                      </div>
-                      <div class="pf-v5-c-card__body">
-                        <form id="game-form" class="pf-v5-c-form" novalidate>
-                          <div class="pf-v5-c-form__group">
-                            <div class="pf-v5-c-form__group-label">
-                              <label class="pf-v5-c-form__label" for="example">
-                                <span class="pf-v5-c-form__label-text">Example</span>
-                              </label>
-                            </div>
-                            <div class="pf-v5-c-form__group-control">
-                              <span class="pf-v5-c-form-control">
-                                <select id="example">
-                                  <option value="">Custom matrix</option>
-                                  {% for example in examples %}
-                                  <option value="{{ example.id }}">{{ example.label }}</option>
-                                  {% endfor %}
-                                </select>
-                              </span>
-                            </div>
-                          </div>
-                          <div class="pf-v5-c-form__group">
-                            <div class="pf-v5-c-form__group-label">
-                              <label class="pf-v5-c-form__label" for="game-label">
-                                <span class="pf-v5-c-form__label-text">Title</span>
-                              </label>
-                            </div>
-                            <div class="pf-v5-c-form__group-control">
-                              <span class="pf-v5-c-form-control">
-                                <input id="game-label" type="text" maxlength="80" placeholder="Name this game to save it" />
-                              </span>
-                            </div>
-                          </div>
-                          <div class="pf-v5-c-form__group">
-                            <div class="pf-v5-c-form__group-label">
-                              <label class="pf-v5-c-form__label" for="game-description">
-                                <span class="pf-v5-c-form__label-text">Explanation</span>
-                              </label>
-                            </div>
-                            <div class="pf-v5-c-form__group-control">
-                              <span class="pf-v5-c-form-control">
-                                <textarea id="game-description" rows="4" maxlength="4000" placeholder="Optional lecture notes or story for this game"></textarea>
-                              </span>
-                            </div>
-                          </div>
-                          <div class="pf-v5-l-grid pf-m-gutter">
-                            <div class="pf-v5-l-grid__item pf-m-6-col">
-                              <div class="pf-v5-c-form__group app-compact-field">
-                                <div class="pf-v5-c-form__group-label">
-                                  <label class="pf-v5-c-form__label" for="player-name">
-                                    <span class="pf-v5-c-form__label-text">Row player</span>
-                                  </label>
-                                </div>
-                                <div class="pf-v5-c-form__group-control">
-                                  <span class="pf-v5-c-form-control">
-                                    <input id="player-name" type="text" maxlength="40" value="P" />
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="pf-v5-l-grid__item pf-m-6-col">
-                              <div class="pf-v5-c-form__group app-compact-field">
-                                <div class="pf-v5-c-form__group-label">
-                                  <label class="pf-v5-c-form__label" for="opponent-name">
-                                    <span class="pf-v5-c-form__label-text">Column player</span>
-                                  </label>
-                                </div>
-                                <div class="pf-v5-c-form__group-control">
-                                  <span class="pf-v5-c-form-control">
-                                    <input id="opponent-name" type="text" maxlength="40" value="O" />
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="pf-v5-l-grid__item pf-m-6-col">
-                              <div class="pf-v5-c-form__group app-compact-field">
-                                <div class="pf-v5-c-form__group-label">
-                                  <label class="pf-v5-c-form__label" for="row-count">
-                                    <span class="pf-v5-c-form__label-text">Row strategies</span>
-                                  </label>
-                                </div>
-                                <div class="pf-v5-c-form__group-control">
-                                  <span class="pf-v5-c-form-control">
-                                    <input id="row-count" type="number" min="1" max="8" value="2" />
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="pf-v5-l-grid__item pf-m-6-col">
-                              <div class="pf-v5-c-form__group app-compact-field">
-                                <div class="pf-v5-c-form__group-label">
-                                  <label class="pf-v5-c-form__label" for="col-count">
-                                    <span class="pf-v5-c-form__label-text">Column strategies</span>
-                                  </label>
-                                </div>
-                                <div class="pf-v5-c-form__group-control">
-                                  <span class="pf-v5-c-form-control">
-                                    <input id="col-count" type="number" min="1" max="8" value="2" />
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="pf-v5-c-form__group">
-                            <div class="pf-v5-c-form__group-label">
-                              <span class="pf-v5-c-form__label">
-                                <span class="pf-v5-c-form__label-text">Payoff matrix</span>
-                              </span>
-                            </div>
-                            <div class="pf-v5-c-form__group-control">
-                              <p class="pf-v5-c-helper-text__item-text">Each cell is (row payoff | column payoff).</p>
-                              <div id="matrix-editor" class="app-matrix"></div>
-                            </div>
-                          </div>
-                          <div class="pf-v5-c-form__group">
-                            <div class="pf-v5-c-form__group-label">
-                              <label class="pf-v5-c-form__label" for="mixed-method">
-                                <span class="pf-v5-c-form__label-text">Mixed-strategy method</span>
-                              </label>
-                            </div>
-                            <div class="pf-v5-c-form__group-control">
-                              <span class="pf-v5-c-form-control">
-                                <select id="mixed-method">
-                                  <option value="support">Support enumeration</option>
-                                  <option value="lemke-howson">Lemke–Howson</option>
-                                  <option value="williams">Williams (constant-sum)</option>
-                                </select>
-                              </span>
-                            </div>
-                          </div>
-                          <div class="pf-v5-c-form__group">
-                            <div class="pf-v5-c-form__group-label">
-                              <span class="pf-v5-c-form__label">
-                                <span class="pf-v5-c-form__label-text">Repeated game</span>
-                              </span>
-                            </div>
-                            <div class="pf-v5-c-form__group-control">
-                              <div class="pf-v5-c-toggle-group" role="group" aria-label="Repeated game">
-                                <div class="pf-v5-c-toggle-group__item">
-                                  <button class="pf-v5-c-toggle-group__button pf-m-selected" type="button" data-repeat-mode="off" aria-pressed="true">One-shot</button>
-                                </div>
-                                <div class="pf-v5-c-toggle-group__item">
-                                  <button class="pf-v5-c-toggle-group__button" type="button" data-repeat-mode="finite" aria-pressed="false">Finite</button>
-                                </div>
-                                <div class="pf-v5-c-toggle-group__item">
-                                  <button class="pf-v5-c-toggle-group__button" type="button" data-repeat-mode="infinite" aria-pressed="false">Infinite</button>
-                                </div>
-                              </div>
-                              <input type="hidden" id="repeat-mode" value="off" />
-                            </div>
-                          </div>
-                          <div class="pf-v5-c-form__group" id="repeat-finite-fields" hidden>
-                            <div class="pf-v5-c-form__group-label">
-                              <label class="pf-v5-c-form__label" for="periods">
-                                <span class="pf-v5-c-form__label-text">Periods</span>
-                              </label>
-                            </div>
-                            <div class="pf-v5-c-form__group-control">
-                              <span class="pf-v5-c-form-control app-compact-field">
-                                <input id="periods" type="number" min="2" max="50" value="2" />
-                              </span>
-                              <span class="pf-v5-c-helper-text">
-                                <span class="pf-v5-c-helper-text__item">Finite unraveling, 2 to 50 periods.</span>
-                              </span>
-                            </div>
-                          </div>
-                          <div class="pf-v5-c-form__group" id="repeat-infinite-fields" hidden>
-                            <div class="pf-v5-l-grid pf-m-gutter">
-                              <div class="pf-v5-l-grid__item pf-m-4-col">
-                                <div class="pf-v5-c-form__group app-compact-field">
-                                  <div class="pf-v5-c-form__group-label">
-                                    <label class="pf-v5-c-form__label" for="discount">
-                                      <span class="pf-v5-c-form__label-text">Discount δ</span>
-                                    </label>
-                                  </div>
-                                  <div class="pf-v5-c-form__group-control">
-                                    <span class="pf-v5-c-form-control">
-                                      <input id="discount" type="number" min="0" max="0.999" step="0.05" value="0.6" />
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div class="pf-v5-l-grid__item pf-m-4-col">
-                                <div class="pf-v5-c-form__group app-compact-field">
-                                  <div class="pf-v5-c-form__group-label">
-                                    <label class="pf-v5-c-form__label" for="cooperate-row">
-                                      <span class="pf-v5-c-form__label-text">Cooperate row</span>
-                                    </label>
-                                  </div>
-                                  <div class="pf-v5-c-form__group-control">
-                                    <span class="pf-v5-c-form-control">
-                                      <input id="cooperate-row" type="number" min="0" max="7" placeholder="auto" />
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div class="pf-v5-l-grid__item pf-m-4-col">
-                                <div class="pf-v5-c-form__group app-compact-field">
-                                  <div class="pf-v5-c-form__group-label">
-                                    <label class="pf-v5-c-form__label" for="cooperate-col">
-                                      <span class="pf-v5-c-form__label-text">Cooperate column</span>
-                                    </label>
-                                  </div>
-                                  <div class="pf-v5-c-form__group-control">
-                                    <span class="pf-v5-c-form-control">
-                                      <input id="cooperate-col" type="number" min="0" max="7" placeholder="auto" />
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            <span class="pf-v5-c-helper-text">
-                              <span class="pf-v5-c-helper-text__item">Leave cooperate cells empty to pick the best Pareto-improving cell.</span>
-                            </span>
-                          </div>
-                          <div class="pf-v5-c-form__group">
-                            <div class="pf-v5-c-check">
-                              <input class="pf-v5-c-check__input" type="checkbox" id="use-weakly" />
-                              <label class="pf-v5-c-check__label" for="use-weakly">Also delete weakly dominated strategies</label>
-                            </div>
-                            <span class="pf-v5-c-helper-text">
-                              <span class="pf-v5-c-helper-text__item">
-                                Weak deletion can drop some Nash equilibria.
-                              </span>
-                            </span>
-                          </div>
-                          <div class="pf-v5-c-form__actions">
-                            <button class="pf-v5-c-button pf-m-primary" type="submit" id="solve-button">Solve</button>
-                            <button class="pf-v5-c-button pf-m-secondary" type="button" id="save-button">Save game</button>
-                            <button class="pf-v5-c-button pf-m-secondary" type="button" id="reset-button">Reset</button>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="pf-v5-l-grid__item pf-m-12-col pf-m-6-col-on-lg">
-                    <div id="results">
-                      <div class="pf-v5-c-empty-state pf-m-lg">
-                        <div class="pf-v5-c-empty-state__content">
-                          <div class="pf-v5-c-empty-state__header">
-                            <div class="pf-v5-c-empty-state__title">
-                              <h2 class="pf-v5-c-title pf-m-lg">No analysis yet</h2>
-                            </div>
-                            <div class="pf-v5-c-empty-state__body">
-                              Load an example or enter a payoff matrix, then solve.
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div id="results">
+              <div class="card">
+                <div class="card-body">
+                  <h2 class="h4 card-title">No analysis yet</h2>
+                  <p class="sw-muted mb-0">Load an example or enter a payoff matrix, then solve.</p>
                 </div>
               </div>
             </div>
           </div>
-        </section>
-      </main>
-    </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="sw-footer mt-auto py-4">
+      <div class="container">
+        <ul class="nav justify-content-center border-bottom pb-3 mb-3">
+          <li class="nav-item"><a href="https://stevwyman.com" class="nav-link px-2">Home</a></li>
+          <li class="nav-item"><a href="/" class="nav-link px-2">Mediation</a></li>
+          <li class="nav-item"><a href="{{ root_path }}/" class="nav-link px-2">Game Theory</a></li>
+          <li class="nav-item"><a href="#" class="nav-link px-2">FAQs</a></li>
+          <li class="nav-item"><a href="#" class="nav-link px-2">About</a></li>
+        </ul>
+        <p class="text-center mb-0">© 2023 stev wyman</p>
+      </div>
+    </footer>
+    <script src="{{ root_path }}/static/vendor/bootstrap.bundle.min.js"></script>
     <script src="{{ root_path }}/static/app.js"></script>
   </body>
 </html>

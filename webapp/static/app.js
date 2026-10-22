@@ -104,7 +104,7 @@
 
   function renderEditor() {
     const table = document.createElement("table");
-    table.className = "pf-v5-c-table pf-m-compact";
+    table.className = "table table-sm table-bordered mb-0";
     table.setAttribute("role", "grid");
     const thead = document.createElement("thead");
     const headRow = document.createElement("tr");
@@ -113,7 +113,7 @@
       const th = document.createElement("th");
       const input = document.createElement("input");
       input.id = `col-name-${j}`;
-      input.className = "app-name-input";
+      input.className = "form-control form-control-sm app-name-input";
       input.type = "text";
       input.maxLength = 16;
       input.size = 6;
@@ -131,7 +131,7 @@
       const th = document.createElement("th");
       const nameInput = document.createElement("input");
       nameInput.id = `row-name-${i}`;
-      nameInput.className = "app-name-input";
+      nameInput.className = "form-control form-control-sm app-name-input";
       nameInput.type = "text";
       nameInput.maxLength = 16;
       nameInput.size = 6;
@@ -145,6 +145,7 @@
         wrap.className = "app-cell";
         const playerInput = document.createElement("input");
         playerInput.id = `cell-${i}-${j}-p`;
+        playerInput.className = "form-control form-control-sm";
         playerInput.type = "number";
         playerInput.step = "any";
         playerInput.value = cell[0];
@@ -153,6 +154,7 @@
         sep.textContent = "|";
         const opponentInput = document.createElement("input");
         opponentInput.id = `cell-${i}-${j}-o`;
+        opponentInput.className = "form-control form-control-sm";
         opponentInput.type = "number";
         opponentInput.step = "any";
         opponentInput.value = cell[1];
@@ -169,11 +171,9 @@
 
   function showAlert(message, variant) {
     const alert = document.createElement("div");
-    alert.className = `pf-v5-c-alert pf-m-${variant}`;
-    const title = document.createElement("div");
-    title.className = "pf-v5-c-alert__title";
-    title.textContent = message;
-    alert.appendChild(title);
+    alert.className = `alert alert-${variant === "danger" ? "danger" : variant}`;
+    alert.setAttribute("role", "alert");
+    alert.textContent = message;
     alertRegion.replaceChildren(alert);
   }
 
@@ -196,19 +196,14 @@
 
   function card(titleText) {
     const cardEl = document.createElement("div");
-    cardEl.className = "pf-v5-c-card";
-    const header = document.createElement("div");
-    header.className = "pf-v5-c-card__header";
-    const title = document.createElement("div");
-    title.className = "pf-v5-c-card__title";
-    const heading = document.createElement("h2");
-    heading.className = "pf-v5-c-card__title-text";
-    heading.textContent = titleText;
-    title.appendChild(heading);
-    header.appendChild(title);
+    cardEl.className = "card";
     const body = document.createElement("div");
-    body.className = "pf-v5-c-card__body";
-    cardEl.append(header, body);
+    body.className = "card-body";
+    const heading = document.createElement("h2");
+    heading.className = "h4 card-title";
+    heading.textContent = titleText;
+    body.appendChild(heading);
+    cardEl.append(body);
     return { card: cardEl, body };
   }
 
@@ -221,11 +216,8 @@
     }
     items.forEach((item) => {
       const label = document.createElement("span");
-      label.className = "pf-v5-c-label";
-      const content = document.createElement("span");
-      content.className = "pf-v5-c-label__content";
-      content.textContent = item;
-      label.appendChild(content);
+      label.className = "badge rounded-pill sw-badge";
+      label.textContent = item;
       wrap.appendChild(label);
     });
     return wrap;
@@ -237,23 +229,17 @@
 
   function renderEmptyResults() {
     const empty = document.createElement("div");
-    empty.className = "pf-v5-c-empty-state pf-m-lg";
-    const content = document.createElement("div");
-    content.className = "pf-v5-c-empty-state__content";
-    const header = document.createElement("div");
-    header.className = "pf-v5-c-empty-state__header";
-    const title = document.createElement("div");
-    title.className = "pf-v5-c-empty-state__title";
-    const heading = document.createElement("h2");
-    heading.className = "pf-v5-c-title pf-m-lg";
-    heading.textContent = "No analysis yet";
-    title.appendChild(heading);
+    empty.className = "card";
     const body = document.createElement("div");
-    body.className = "pf-v5-c-empty-state__body";
-    body.textContent = "Load an example or enter a payoff matrix, then solve.";
-    header.append(title, body);
-    content.appendChild(header);
-    empty.appendChild(content);
+    body.className = "card-body";
+    const heading = document.createElement("h2");
+    heading.className = "h4 card-title";
+    heading.textContent = "No analysis yet";
+    const copy = document.createElement("p");
+    copy.className = "sw-muted mb-0";
+    copy.textContent = "Load an example or enter a payoff matrix, then solve.";
+    body.append(heading, copy);
+    empty.appendChild(body);
     results.replaceChildren(empty);
   }
 
@@ -264,7 +250,7 @@
     infiniteFields.hidden = next !== "infinite";
     document.querySelectorAll("[data-repeat-mode]").forEach((button) => {
       const selected = button.getAttribute("data-repeat-mode") === next;
-      button.classList.toggle("pf-m-selected", selected);
+      button.classList.toggle("active", selected);
       button.setAttribute("aria-pressed", selected ? "true" : "false");
     });
   }
@@ -311,7 +297,7 @@
     const wrap = document.createElement("div");
     wrap.className = "app-result-matrix";
     const table = document.createElement("table");
-    table.className = "pf-v5-c-table pf-m-compact";
+    table.className = "table table-sm table-bordered mb-0";
     table.setAttribute("aria-label", "Pure Nash best-response grid");
     const thead = document.createElement("thead");
     const head = document.createElement("tr");
@@ -350,7 +336,7 @@
     const wrap = document.createElement("div");
     wrap.className = "app-result-matrix";
     const table = document.createElement("table");
-    table.className = "pf-v5-c-table pf-m-compact";
+    table.className = "table table-sm table-bordered mb-0";
     const thead = document.createElement("thead");
     const head = document.createElement("tr");
     head.appendChild(document.createElement("th"));
@@ -381,7 +367,7 @@
 
   function renderResults(data) {
     const stack = document.createElement("div");
-    stack.className = "pf-v5-l-stack pf-m-gutter";
+    stack.className = "d-flex flex-column gap-3";
 
     const matrixCard = card("Payoff matrix");
     matrixCard.body.appendChild(renderMatrix(data.game));
@@ -393,9 +379,9 @@
     stack.appendChild(matrixCard.card);
 
     const dominanceCard = card("Dominance");
-    ["player", "opponent"].forEach((role) => {
+    ["player", "opponent"].forEach((role, index) => {
       const heading = document.createElement("h3");
-      heading.className = "pf-v5-c-title pf-m-md";
+      heading.className = index ? "h5 mt-3" : "h5";
       heading.textContent = role === "player" ? data.game.player_name : data.game.opponent_name;
       dominanceCard.body.appendChild(heading);
       const list = document.createElement("dl");
@@ -462,7 +448,7 @@
     }
     data.mixed.equilibria.forEach((eq, index) => {
       const heading = document.createElement("h3");
-      heading.className = "pf-v5-c-title pf-m-md";
+      heading.className = "h5 mt-3";
       heading.textContent =
         data.mixed.equilibria.length > 1 ? `Equilibrium ${index + 1}` : "Mix";
       mixedCard.body.appendChild(heading);
@@ -687,16 +673,6 @@
   });
   saveButton.addEventListener("click", saveGame);
   resetButton.addEventListener("click", resetGame);
-  document.querySelectorAll("[data-theme-mode]").forEach((button) => {
-    button.addEventListener("click", () => {
-      if (window.GameTheme) {
-        window.GameTheme.apply(button.getAttribute("data-theme-mode"));
-      }
-    });
-  });
-  if (window.GameTheme) {
-    window.GameTheme.apply(window.GameTheme.getMode());
-  }
   form.addEventListener("submit", solve);
 
   renderEditor();

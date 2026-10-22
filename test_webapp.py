@@ -20,23 +20,28 @@ def test_health():
     assert response.json() == {"status": "ok"}
     assert response.headers["X-Frame-Options"] == "DENY"
     assert "default-src 'self'" in response.headers["Content-Security-Policy"]
+    assert "style-src-attr 'unsafe-inline'" in response.headers["Content-Security-Policy"]
 
 
-def test_index_renders_patternfly():
+def test_index_renders_bootstrap():
     response = client.get("/")
     assert response.status_code == 200
     assert "Game theory solver" in response.text
     assert 'data-app-root=""' in response.text
     assert 'href="/static/app.css"' in response.text
     assert "logo.svg" in response.text
-    assert "patternfly.min.css" in response.text
+    assert 'class="app-logo"' in response.text
+    assert "sw-brand" not in response.text
+    assert "bootstrap.min.css" in response.text
+    assert "bootstrap.bundle.min.js" in response.text
     assert "theme.js" in response.text
     assert "Reset" in response.text
     assert "Save game" in response.text
     assert "Explanation" in response.text
     assert 'data-repeat-mode="finite"' in response.text
-    assert 'data-theme-mode="auto"' in response.text
+    assert 'data-sw-theme-value="auto"' in response.text
     assert "tennis" in response.text
+    assert "patternfly" not in response.text.lower()
 
 
 def test_root_path_prefix(monkeypatch):

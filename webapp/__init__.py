@@ -1,1 +1,1 @@
-"""PatternFly web UI for the payoff-matrix solver."""
+"""Bootstrap web UI for the payoff-matrix solver."""

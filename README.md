@@ -80,7 +80,7 @@ If `-c` is omitted, only `games/default.ini` is loaded. A game file is never mix
 
 ## Web app
 
-A PatternFly UI wraps the same solvers. Serve it with uvicorn:
+A Bootstrap UI wraps the same solvers, using the same palette and Light/Dark/Auto theme as the mediation app. Serve it with uvicorn:
 
 ```sh
 pip install -r requirements.txt
@@ -128,7 +128,7 @@ Python files:
 3. `lemke_howson.py` — complementary pivoting (Lemke–Howson 1964)
 4. `williams.py` — fictitious play for zero-sum games
 5. `repeated.py` — finite unraveling and infinite grim trigger
-6. `webapp/` — PatternFly UI, JSON API, and SQLite game store
+6. `webapp/` — Bootstrap UI, JSON API, and SQLite game store
 7. `test_game.py` / `test_webapp.py` — pytest suite
 
 A game:
